@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+  <Transactions>
+    <Transaction>2019/05/05 16:22:48.755,=C:\Users\HUASINE\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2019/05/05 16:23:33.615,D:\works\delphi\pp\test\uMain.pas=C:\Users\HUASINE\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2019/05/05 16:23:33.615,D:\works\delphi\pp\test\uMain.dfm=C:\Users\HUASINE\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2019/05/05 16:23:39.861,D:\works\delphi\pp\test\test.dproj=C:\Users\HUASINE\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2019/05/05 16:24:13.469,=D:\works\delphi\pp\test\Unit2.pas</Transaction>
+    <Transaction>2019/05/05 16:24:45.861,D:\works\delphi\pp\test\uWeb.pas=D:\works\delphi\pp\test\Unit2.pas</Transaction>
+    <Transaction>2019/05/05 16:24:45.861,D:\works\delphi\pp\test\uWeb.dfm=D:\works\delphi\pp\test\Unit2.dfm</Transaction>
+    <Transaction>2019/05/10 10:04:37.054,=D:\works\delphi\pp\test\Unit1.pas</Transaction>
+    <Transaction>2019/05/10 10:05:03.714,D:\works\delphi\pp\test\uFuncs.pas=D:\works\delphi\pp\test\Unit1.pas</Transaction>
+    <Transaction>2019/05/10 10:21:41.712,=D:\works\delphi\pp\test\Unit1.pas</Transaction>
+    <Transaction>2019/05/10 10:21:58.357,D:\works\delphi\pp\test\uConfig.pas=D:\works\delphi\pp\test\Unit1.pas</Transaction>
+    <Transaction>2019/05/10 16:32:44.469,=D:\works\delphi\pp\test\Unit1.pas</Transaction>
+    <Transaction>2019/05/10 16:33:06.432,D:\works\delphi\pp\test\uXml.pas=D:\works\delphi\pp\test\Unit1.pas</Transaction>
+  </Transactions>
+</BorlandProject>

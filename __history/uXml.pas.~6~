@@ -1,0 +1,198 @@
+unit uXml;
+
+interface
+uses
+  XMLDoc,XMLIntf, StdCtrls,uConfig,system.classes,sysutils;
+
+  procedure createXml();
+  function getnodefromIXMLNodeList(childnodes:IXMLNodeList;nodename:String):IXMLNode;
+implementation
+
+procedure createXml();
+var
+  Xml: TXMLDocument;
+  RootNode,parentNode,node : IXMLNode;
+begin
+  Xml := TXMLDocument.Create(nil);
+  // Xml.LoadFromFile('aaa.xml');
+  try
+    //加入版本信息 ‘<?xml version="1.0" encoding="GB2312" ?> ’
+    Xml.Active := True;
+    Xml.Version := '1.0';
+    Xml.Encoding :='utf-8';
+
+    Rootnode := Xml.CreateNode('pp');
+    Xml.DocumentElement := Rootnode;
+    parentNode := Xml.CreateNode('pos');
+    Rootnode.ChildNodes.Add(parentNode);
+    node := Xml.CreateNode('form');
+    parentNode.ChildNodes.Add(node);
+    node.Text:='30,58,78,120';//
+
+    parentNode := Xml.CreateNode('strategy');
+    Rootnode.ChildNodes.Add(parentNode);
+
+    Xml.SaveToFile(uConfig.configFile);
+    xml.Active := False;
+  finally
+    Xml.Free;
+  end;
+end;
+
+{-------------------------------------------------------------------------------
+  Fun/Pro:      GetXMLNodeSpecialValue
+  @Date:      2004.12.11
+  @Param:     xmlFile xml文件
+  @Param:     xmlnodepath 节点
+  @Param:     xmlattrname 节点中的属性名称，如果直接取节点值则可以忽略此参数。
+  @Param:     XMLSpecialName  要查找的节点中属性名
+  @Param:     XMLSpecialValue 要查找的节点中某属性对应的值
+  @Param:     dep  节点的参数的分隔符，默认为.
+  @Return:      某属性的值
+-------------------------------------------------------------------------------}
+function GetXMLNodeSpecialValue(strEntityEngineFile:String; XMLNodePath:String;
+    const XMLAttrName:String=''; const XMLSpecialName:String=''; const XMLSpecialValue:String=''; const dep:Char ='.'):String;
+var
+  xmlDocument :IXMLDocument;
+  node        :IXMLNode;
+  xmlnodeList :TStrings;
+  i           :Integer;
+  urlcount    :Integer;
+begin
+    //xml节点路径
+    xmlnodeList:=TStringList.Create;
+    xmlnodeList.Delimiter:=dep;
+    xmlnodeList.DelimitedText:=xmlnodepath;
+    urlcount:=xmlnodeList.Count;
+    //xml对象
+    xmlDocument :=TXMLDocument.Create(nil);
+    xmlDocument.LoadFromFile(strEntityEngineFile);
+    xmlDocument.Active:=true;
+    try
+        node:= xmlDocument.DocumentElement;
+        if(node.NodeName = xmlnodeList[0]) then begin
+            //扫描节点
+            for i := 1  to urlcount-1 do begin
+                if(node<>nil) then
+                begin
+                    node := getnodefromIXMLNodeList(node.ChildNodes,xmlnodeList[i]);
+                end
+                else Break;
+            end;
+            if(node=nil)then begin
+                result:='';
+            end else begin
+                //判断是取属性还是取节点内容
+                if(Trim(xmlattrname)='') then
+                    result:=node.Text
+                else
+                begin
+                    result := node.AttributeNodes.Nodes[XMLSpecialName].NodeValue; //这里不想再声明一个临时变量了，就用result来比较，可能有隐患。
+                    while ((result <> XMLSpecialValue)) do
+                    begin
+                      node := node.NextSibling;
+                      while (node.NodeName = '#comment') do
+                      begin
+                        node:= node.NextSibling;
+                      end;
+                      result := node.AttributeNodes.Nodes[XMLSpecialName].NodeValue;
+                    end;
+                    result:=node.AttributeNodes.Nodes[XMLAttrName].NodeValue;
+                end;
+            end;
+        end else begin
+          result:='';
+        end;
+
+    except
+        result:='error';
+    end;
+    xmlDocument.Active:=false;
+end;
+
+
+{-------------------------------------------------------------------------------
+  Fun/Pro:      SetXMLNodeSpecialValue
+  @Date:      2004.12.11
+  @Param:     xmlFile xml文件
+  @Param:     xmlnodepath 节点
+  @Param:     xmlattrname 节点中的属性名称，如果直接取节点值则可以忽略此参数。
+  @Param:     XMLSpecialName  要查找的节点中属性名
+  @Param:     XMLSpecialValue 要查找的节点中某属性对应的值
+  @Param:     dep  节点的参数的分隔符，默认为.
+  @Return:      操作成功与否
+-------------------------------------------------------------------------------}
+function SetXMLNodeSpecialValue(strEntityEngineFile:String; xmlNodePath:String;
+    const xmlattrname:String=''; const value:String=''; const XMLSpecialName:String=''; const XMLSpecialValue:String=''; const dep:Char ='.'):boolean;
+var
+  xmlDocument :IXMLDocument;
+  node        :IXMLNode;
+  xmlnodeList :TStrings;
+  i           :Integer;
+  urlcount    :Integer;
+  CMPValue    :String;
+begin
+    //xml节点路径
+    xmlnodeList:=TStringList.Create;
+    xmlnodeList.Delimiter:=dep;
+    xmlnodeList.DelimitedText:=xmlnodepath;
+    urlcount:=xmlnodeList.Count;
+    //xml对象
+    xmlDocument :=TXMLDocument.Create(nil);
+    xmlDocument.LoadFromFile(strEntityEngineFile);
+    xmlDocument.Active:=true;
+    try
+        node:= xmlDocument.DocumentElement;
+        if(node.NodeName = xmlnodeList[0]) then begin
+            //扫描节点
+            for i := 1  to urlcount-1 do begin
+                if(node<>nil) then
+                    node := getnodefromIXMLNodeList(node.ChildNodes,xmlnodeList[i])
+                else Break;
+            end;
+
+            if(node <> nil)then begin
+                {if(Trim(xmlattrname)='') then
+                    node.Text:=value
+                else
+                    node.AttributeNodes.Nodes[xmlattrname].NodeValue:=value;
+                }
+                if (Trim(XMLAttrName)='') then
+                  node.Text := value
+                else
+                begin
+                  CMPValue := node.AttributeNodes.Nodes[XMLSpecialName].NodeValue;
+                  while (CMPValue <> XMLSpecialValue) do
+                  begin
+                    node := node.NextSibling;
+                    while (node.NodeName = '#comment') do
+                    begin
+                      node:= node.NextSibling;
+                    end;
+                    CMPValue := node.AttributeNodes.Nodes[XMLSpecialName].NodeValue;
+                  end;
+                  node.AttributeNodes.Nodes[XMLAttrName].NodeValue:=value;
+                end;
+                xmlDocument.SaveToFile(strEntityEngineFile);
+            end;
+        end;
+        result:=true;
+    except
+        result:=false;
+    end;
+    xmlDocument.Active:=false;
+end;
+
+
+function getnodefromIXMLNodeList(childnodes:IXMLNodeList;nodename:String):IXMLNode;
+var
+  i: Integer;
+begin
+  for i :=1  to childnodes.Count do begin
+  if(childnodes.Get(i-1).NodeName = nodename) then begin
+     result:= childnodes[i-1];
+     exit;
+  end;
+end;
+end;
+end.
