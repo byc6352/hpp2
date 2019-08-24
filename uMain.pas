@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,uWeb,strutils, Vcl.ComCtrls,uXml,uconfig,
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
-  IdHTTP;
+  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP;
 
 type
   TfMain = class(TForm)
@@ -75,6 +75,7 @@ type
     edtSubmitVerCodeTime: TLabeledEdit;
     chkVerCode: TCheckBox;
     edtVerCode: TEdit;
+    IdSNTP1: TIdSNTP;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -607,7 +608,8 @@ begin
   fweb.state.autoPP:=false;
   statusbar1.Panels[0].Text:='当前状态：未进入系统';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
-
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);

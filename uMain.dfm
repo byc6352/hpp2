@@ -629,4 +629,10 @@ object fMain: TfMain
     Left = 720
     Top = 194
   end
+  object IdSNTP1: TIdSNTP
+    Host = 'time.windows.com'
+    Port = 123
+    Left = 720
+    Top = 248
+  end
 end
