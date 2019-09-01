@@ -446,16 +446,17 @@ begin
     sleep(10);
     //2.点击提交
     mouseClick(rctSubmitPrice.CenterPoint);
-    sleep(1000);
-    //3.点击输入验证码文本框：
-    mouseClick(rctInputVerificationCode.CenterPoint);
-    //4.如果验证码不为空，则输入验证码；
-    if(fmain.chkVerCode.Checked) then fweb.mVerCode:=trim(fmain.edtVerCode.Text) else fweb.mVerCode:='';
-    if(mVerCode<>'')then inputstring(mVerCode);
+    //sleep(1000);
+
   end;
   if(mRemainSec<mSubmitVerCodeTime) and (mIsSubmitVerifiCode=false)then //开始提交验证码：
   begin
     mIsSubmitVerifiCode:=true;
+    //3.点击输入验证码文本框：
+    mouseClick(rctInputVerificationCode.CenterPoint);
+    //4.如果验证码不为空，则输入验证码；
+    if(fmain.chkVerCode.Checked) then fweb.mVerCode:=trim(fmain.edtVerCode.Text) else fweb.mVerCode:='';
+    if(mVerCode<>'')then inputstring(mVerCode) else fmain.memInfo.Lines.Add('验证码为空！');
     //5.点击提交
     getCursorPos(pos);
     mouseClick(pos);

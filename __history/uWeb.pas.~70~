@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.OleCtrls, SHDocVw, Vcl.AppEvnts,ActiveX,uFuncs,uConfig
-  ,jpeg, Comobj, MSHTML,strutils;
+  ,jpeg, Comobj, MSHTML,strutils, Vcl.ExtCtrls;
 
 type
   Tstate=record
@@ -16,13 +16,21 @@ type
   TfWeb = class(TForm)
     wb1: TWebBrowser;
     ApplicationEvents1: TApplicationEvents;
+    Panel2: TPanel;
+    wb2: TWebBrowser;
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure wb1DocumentComplete(ASender: TObject; const pDisp: IDispatch;
       const URL: OleVariant);
+    procedure wb2BeforeNavigate2(ASender: TObject; const pDisp: IDispatch;
+      const URL, Flags, TargetFrameName, PostData, Headers: OleVariant;
+      var Cancel: WordBool);
+    procedure wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
+      var Cancel: WordBool);
   private
     { Private declarations }
+    mIsRct:boolean;
     //paramPos1:tPoint;//参数坐标
     //**********************************抢拍策略**************************************************
 
@@ -52,7 +60,9 @@ type
     mAddPrice:integer;//加价幅度
     mRequestVerCodeTime:integer;//出价时间点
     mSubmitVerCodeTime:integer;//提交服务器时间点
+    configFile:string;//当前配置文件；
     token:string;
+    mVerg,mVerm:tstrings;//验证码；
     procedure strategy1();
     procedure Initstrategy1();
     procedure strategy1Test();//测试抢拍策略1
@@ -60,6 +70,7 @@ type
     procedure AddPriceStrategy();
     procedure InitAddPriceStrategy();
     procedure AutoPriceStrategy();
+    procedure PriceStrategy();
   end;
 
 var
@@ -90,8 +101,10 @@ begin
     GetCursorPos(pos1); //得到光标位置
     pos2.X:=0;pos2.Y:=0;
     rctParam:=rect(pos1,pos2);
+    mIsRct:=true;
   end;
   if(Msg.message = WM_LBUTTONUP)then begin
+    mIsRct:=false;
     GetCursorPos(pos2); //得到光标位置
     rctParam.BottomRight:=pos2;
     bmp:=uFuncs.captureScreen(rctParam.Left,rctParam.Top,rctParam.Right,rctParam.Bottom);
@@ -109,6 +122,11 @@ begin
     GetCursorPos(pos); //得到光标位置
     //fMain.lbPos.Caption:='当前坐标：'+inttostr(pos.X)+','+inttostr(pos.Y);
     fMain.StatusBar1.Panels[2].Text:='当前坐标：'+inttostr(pos.X)+','+inttostr(pos.Y);
+    if(mIsRct)then begin
+      rctParam.BottomRight:=pos;
+      //Canvas.Rectangle(rctParam);
+      fweb.Canvas.Rectangle(rctParam);
+    end;
   end;
   getParam(msg);
 end;
@@ -133,6 +151,10 @@ begin
   BringWindowToTop(fweb.handle);
   //SetWindowPos(fweb.handle,HWND_TOPMOST,rctForm.Left,rctForm.Top,rctForm.Width,rctForm.Height,SWP_NOMOVE  or  SWP_NOSIZE);
   //wb1.Navigate('http://test.alltobid.com/moni/gerenbid.html');
+  fweb.Canvas.Pen.Width:=2;
+  fweb.Canvas.Pen.Style:=psDash;
+  fweb.Canvas.Pen.Color:=clred;
+  fweb.Canvas.Pen.Mode:=pmcopy;
 end;
 
 procedure TfWeb.wb1DocumentComplete(ASender: TObject; const pDisp: IDispatch;
@@ -156,20 +178,34 @@ begin
   with wb1 do
   begin
     Document.QueryInterface(IHTMLDocument2, IDoc1);
-    Web := ControlInterface;
-    tmpX := Height;
-    tmpY := Width;
-    Height := OleObject.Document.ParentWindow.Screen.Height;
-    Width := OleObject.Document.ParentWindow.Screen.Width;
+    Web := wb1.ControlInterface;
+    tmpX := wb1.Height;
+    tmpY := wb1.Width;
+    //Height := OleObject.Document.ParentWindow.Screen.Height;
+    //Width := OleObject.Document.ParentWindow.Screen.Width;
     GenerateJPEGfromBrowser(Web, filename,
                             Height, Width,
                             Height, Width);
-    Height := tmpX;
-    Width := tmpY;
+    //Height := tmpX;
+    //Width := tmpY;
   end;
   fWeb.width:=wb1.width;
   fWeb.height:=wb1.Height;
 end;
+procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
+  var Cancel: WordBool);
+begin
+ppDisp := wb2.Application; // 新的窗口先指向WebBrowser2
+end;
+
+procedure TfWeb.wb2BeforeNavigate2(ASender: TObject; const pDisp: IDispatch;
+  const URL, Flags, TargetFrameName, PostData, Headers: OleVariant;
+  var Cancel: WordBool);
+begin
+  wb1.Navigate(string(URL)); // 再指回WebBrowser1
+  Cancel := True;
+end;
+
 procedure TfWeb.GenerateJPEGfromBrowser(browser: iWebBrowser2;
                                   jpegFQFilename: string; srcHeight:
                                   integer; srcWidth: integer;
@@ -389,4 +425,45 @@ begin
   end;
 
 end;
+
+{-------------------------------------------------------------------------
+ 加价+自动抢拍策略1：
+}
+procedure TfWeb.PriceStrategy();
+var
+  pos:tPoint;
+begin
+  if(mIsAddPrice=false)then begin //1.输入加价值
+     mIsAddPrice:=true;
+     mouseClick(rctInputAddPrice.CenterPoint);
+     inputstring(inttostr(mAddPrice));
+  end;
+  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //开始提交价格：
+  begin
+    mIsSubmitPrice:=true;
+    //1.点击加价按钮；
+    mouseClick(rctSubmitAddPrice.CenterPoint);
+    sleep(10);
+    //2.点击提交
+    mouseClick(rctSubmitPrice.CenterPoint);
+    sleep(1000);
+    //3.点击输入验证码文本框：
+    mouseClick(rctInputVerificationCode.CenterPoint);
+    //4.如果验证码不为空，则输入验证码；
+    if(fmain.chkVerCode.Checked) then fweb.mVerCode:=trim(fmain.edtVerCode.Text) else fweb.mVerCode:='';
+    if(mVerCode<>'')then inputstring(mVerCode);
+  end;
+  if(mRemainSec<mSubmitVerCodeTime) and (mIsSubmitVerifiCode=false)then //开始提交验证码：
+  begin
+    mIsSubmitVerifiCode:=true;
+    //5.点击提交
+    getCursorPos(pos);
+    mouseClick(pos);
+    sleep(10);
+    mouseClick(rctSubmitVerificationCode.CenterPoint);
+    keybd_event(VK_RETURN, MapVirtualKey(VK_RETURN, 0), 0, 0); //
+  end;
+
+  end;
+
 end.
