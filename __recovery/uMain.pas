@@ -7,35 +7,30 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,uWeb,strutils, Vcl.ComCtrls,uXml,uconfig,
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
-  IdHTTP;
+  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,webhook;
 
 type
   TfMain = class(TForm)
-    btnVirtual: TButton;
     StatusBar1: TStatusBar;
-    GroupBox1: TGroupBox;
-    GroupBox2: TGroupBox;
-    btnGP: TButton;
-    edtForm: TLabeledEdit;
     Timer1: TTimer;
-    GroupBox3: TGroupBox;
     chkPrice: TCheckBox;
-    imgPrice: TImage;
-    edtPrice: TLabeledEdit;
     IdHTTP1: TIdHTTP;
     IdSSLIOHandlerSocketOpenSSL1: TIdSSLIOHandlerSocketOpenSSL;
+    Timer2: TTimer;
+    IdSNTP1: TIdSNTP;
+    Page1: TPageControl;
+    TabSheet1: TTabSheet;
+    tsInfo: TTabSheet;
+    GroupBox1: TGroupBox;
+    edtForm: TLabeledEdit;
+    GroupBox3: TGroupBox;
+    imgPrice: TImage;
+    edtPrice: TLabeledEdit;
+    btnPriceSave: TButton;
+    btnPriceUpdate: TButton;
     chkFwebOnTop: TCheckBox;
     btnFormUpdate: TButton;
     btnFormSave: TButton;
-    btnPriceSave: TButton;
-    btnPriceUpdate: TButton;
-    GroupBox4: TGroupBox;
-    chkGetParam: TCheckBox;
-    imgGetParam: TImage;
-    edtGetParam: TLabeledEdit;
-    cmbStrategy: TComboBox;
-    memStrategySay: TMemo;
-    btnAutoPP: TButton;
     edtInputPriceParam: TLabeledEdit;
     btnUpdateInputPriceParam: TButton;
     btnSaveInputPriceParam: TButton;
@@ -48,19 +43,10 @@ type
     edtInputVerificationCodeParam: TLabeledEdit;
     btnUpdateInputVerifyCodeParam: TButton;
     btnSaveInputVerifyCodeParam: TButton;
-    btnTestPP: TButton;
-    edtAddPrice: TLabeledEdit;
     btnTestInputPriceParam: TButton;
     btnTestInputVerifyCodeParam: TButton;
     btnTestSubmitPriceParam: TButton;
     btnTestSubmitVerificationCodeParam: TButton;
-    Timer2: TTimer;
-    GroupBox5: TGroupBox;
-    btnToken: TButton;
-    edtToken: TEdit;
-    GroupBox6: TGroupBox;
-    edtVirtualSysAddr: TLabeledEdit;
-    edtGPsysAddr: TLabeledEdit;
     edtInputAddPriceParam: TLabeledEdit;
     btnUpdateInputAddPriceParam: TButton;
     btnSaveInputAddPriceParam: TButton;
@@ -69,12 +55,31 @@ type
     btnUpdateSubmitAddPriceParam: TButton;
     btnSaveSubmitAddPriceParam: TButton;
     btnTestSubmitAddPriceParam: TButton;
-    edtRequestVercodeTime: TLabeledEdit;
     edtFinishTime: TLabeledEdit;
     btnUpdateFinishTime: TButton;
-    edtSubmitVerCodeTime: TLabeledEdit;
     chkVerCode: TCheckBox;
     edtVerCode: TEdit;
+    GroupBox4: TGroupBox;
+    imgGetParam: TImage;
+    chkGetParam: TCheckBox;
+    edtGetParam: TLabeledEdit;
+    GroupBox5: TGroupBox;
+    btnToken: TButton;
+    edtToken: TEdit;
+    GroupBox2: TGroupBox;
+    cmbStrategy: TComboBox;
+    memStrategySay: TMemo;
+    edtAddPrice: TLabeledEdit;
+    edtRequestVercodeTime: TLabeledEdit;
+    edtSubmitVerCodeTime: TLabeledEdit;
+    GroupBox6: TGroupBox;
+    edtVirtualSysAddr: TLabeledEdit;
+    edtGPsysAddr: TLabeledEdit;
+    btnVirtual: TButton;
+    btnGP: TButton;
+    btnAutoPP: TButton;
+    btnTestPP: TButton;
+    memInfo: TMemo;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -115,8 +120,9 @@ type
     function baiduIdentify(bmp:Tbitmap):string;
     function getRectFromStr(s:string):tRect;
     procedure getPrice();
-    procedure saveStrategy();
-    procedure setEndTime();
+    procedure saveStrategy(configFile:string);
+    procedure httpMessage(var MSG:TMessage); message WM_CAP_WORK;
+    procedure getVerCode(url:string);
   public
     { Public declarations }
 
@@ -126,111 +132,162 @@ var
   fMain: TfMain;
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
+  function initEndTime():string;
+  function ReversePos(SubStr, S: String): Integer;
 implementation
 
 {$R *.dfm}
-procedure TfMain.setEndTime();
-const
-  END_TIME='11:30';
+function ReversePos(SubStr, S: String): Integer;
 var
-  w:word;//Ã¿ÔÂµÚ¼¸¸öĞÇÆÚ£»
-  d:word;//µ±Ç°ÊÇĞÇÆÚ¼¸£»
-  r:integer;
-  t:ttime;
-  endDateTime:string;
-  fmt: TFormatSettings;
+  i : Integer;
 begin
+  i := Pos(ReverseString(SubStr), ReverseString(S));
+  if i > 0 then i := Length(S) - i - Length(SubStr) + 2;
+  Result := i;
+end;
+procedure TfMain.getVerCode(url:string);
+var
+  filename,vercode:string;
+  i:integer;
+begin
+   if(fweb.state.autoPP=true and chkVerCode.Checked=true)then begin
+    i:=ReversePos('/',url);
+    filename:=midstr(url,i+1,length(url)-i-4);
+    if TryStrToInt(Trim(filename),i) then begin
+      if(fweb.state.VirtualSys) then
+        vercode:=fweb.mVerm[i-1]
+      else
+        vercode:=fweb.mVerg[i-1];
+      fweb.mVerCode:=vercode;
+      edtvercode.Text:=vercode;
+    end;
+  end;
+end;
+procedure TfMain.httpMessage(var msg:TMessage);
+var
+  len,flag:integer;
+  p:pointer;
+  say,data:ansistring;
+
+begin
+  flag:=msg.LParam;
+  len:=msg.WParam;
+  case flag of
+  0:begin
+      say:='å‘é€æ•°æ®ï¼š'+inttostr(len);
+      data:=gSend;
+    end;
+  1:begin
+      say:='æ¥æ”¶æ•°æ®ï¼š'+inttostr(len);
+      data:=gRecv;
+    end;
+  2:begin
+      say:='URLï¼š'+inttostr(len);
+      data:=gUrl;
+      getVerCode(data);
+    end;
+  end;
+  memInfo.Lines.Add(say);
+  if(length(data)<500)then
+    memInfo.Lines.Add(data);
+  statusbar1.Panels[0].Text:=say;
+end;
+function initEndTime():string;
+//const
+  //END_TIME='11:30:00';
+var
+  w:word;//æ¯æœˆç¬¬å‡ ä¸ªæ˜ŸæœŸï¼›
+  d:word;//å½“å‰æ˜¯æ˜ŸæœŸå‡ ï¼›
+  r:integer;//æ—¶é—´æ¯”è¾ƒç»“æœ
+  END_TIME_t:ttime; //11:30:00
+  endDateTime,dayString,datetimeString:string;
+  fmt: TFormatSettings;
+  endDateTimeT:tdatetime;
+  END_TIME:string;//END_TIME='11:30:00';
+begin
+  GetLocaleFormatSettings(GetThreadLocale, fmt);
+  END_TIME:='11'+fmt.TimeSeparator+'30'+fmt.TimeSeparator+'00';
    w := WeekOfTheMonth(now()); //3
    d:=DayOfTheWeek(Now);
-   t:=strtotime(END_TIME);
-   r:= CompareTime(now(), t);     //1
-   GetLocaleFormatSettings(GetThreadLocale, fmt);
+   END_TIME_t:=strtotime(END_TIME);
+   r:= CompareTime(now(), END_TIME_t);     //1
    if (w=3) and (d=6) and (r=-1) then begin
-     if(fmt.DateSeparator = '/')then
-     DateTimeToString(endDateTime, 'yyyy/mm/dd ', now());
+     dayString:='yyyy'+fmt.DateSeparator+'mm'+fmt.DateSeparator+'dd ';
+     DateTimeToString(endDateTime, dayString, now());
      endDateTime:=endDateTime+END_TIME;
 
    end else begin
-
+     endDateTimeT:=IncMinute(now(),5);
+     datetimeString:='yyyy'+fmt.DateSeparator+'mm'+fmt.DateSeparator+'dd hh:nn:00';
+     DateTimeToString(endDateTime, datetimeString, endDateTimeT);
    end;
-
-   END_TIME
+   result:=endDateTime;
+   //edit1.text:=endDateTime;
 end;
-procedure TfMain.saveStrategy();
+procedure TfMain.saveStrategy(configFile:string);
 var
   say:string;
 begin
-  fweb.mAddPrice:=strtoint(trim(edtAddPrice.Text)); //
-  fweb.mRequestVerCodeTime:=strtoint(trim(edtRequestVercodeTime.Text)); //
-  fweb.mSubmitVerCodeTime:=strtoint(trim(edtSubmitVercodeTime.Text));
-  if(chkVerCode.Checked) then fweb.mVerCode:=trim(edtVerCode.Text) else fweb.mVerCode:='';
-  say:='ÀëÅÄÂô½áÊøÇ°'+edtRequestVercodeTime.Text+'ÃëÌá½»Ò»¸ö¼Ó'+inttostr(fweb.mAddPrice)+'µÄ¼Û¸ñ£»';
-  memStrategySay.Text:='²ßÂÔ'+inttostr(cmbStrategy.ItemIndex+1)+'ËµÃ÷£º '+#13#10+say;
+
+  say:='ç¦»æ‹å–ç»“æŸå‰'+edtRequestVercodeTime.Text+'ç§’æäº¤ä¸€ä¸ªåŠ '+inttostr(fweb.mAddPrice)+'çš„ä»·æ ¼ï¼›';
+  memStrategySay.Text:='ç­–ç•¥'+inttostr(cmbStrategy.ItemIndex+1)+'è¯´æ˜ï¼š '+#13#10+say;
 
   if(cmbStrategy.ItemIndex=0) then begin
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','requestvercodetime',edtRequestVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','submitpricetime',edtSubmitVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','addprice',edtAddPrice.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','',say);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','requestvercodetime',edtRequestVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','submitpricetime',edtSubmitVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','addprice',edtAddPrice.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','',say);
   end else if(cmbStrategy.ItemIndex=1) then begin
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','requestvercodetime',edtRequestVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','submitpricetime',edtSubmitVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','addprice',edtAddPrice.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy2','requestvercodetime',edtRequestVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy2','submitpricetime',edtSubmitVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy2','addprice',edtAddPrice.Text);
     uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','',say);
   end else if(cmbStrategy.ItemIndex=2) then begin
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','requestvercodetime',edtRequestVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','submitpricetime',edtSubmitVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','addprice',edtAddPrice.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','',say);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','requestvercodetime',edtRequestVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','submitpricetime',edtSubmitVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','addprice',edtAddPrice.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','',say);
   end;
 end;
 procedure TfMain.btnAutoPPClick(Sender: TObject);
 begin
-  saveStrategy();//±£´æ²ßÂÔ²ÎÊı
-  fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
 
-  fweb.initAddPriceStrategy();
-
-  if(btnAutoPP.Caption='×Ô¶¯ÇÀÅÄ')then
+  if(btnAutoPP.Caption='è‡ªåŠ¨æŠ¢æ‹')then
   begin
-    btnAutoPP.Caption:='Í£Ö¹ÇÀÅÄ';
-    //×´Ì¬ÏÔÊ¾£º
-    //fweb.state.enterSys:=true;
-    fweb.state.autoPP:=true;
     if(fweb.state.enterSys=false)then
     begin
-      showmessage('±ØĞëÏÈ½øÈëÇÀÅÄÏµÍ³£¬²ÅÄÜ¿ªÊ¼ÇÀÅÄ£¡');
+      showmessage('å¿…é¡»å…ˆè¿›å…¥æŠ¢æ‹ç³»ç»Ÿï¼Œæ‰èƒ½å¼€å§‹æŠ¢æ‹ï¼');
       exit;
     end;
-    //chkPrice.Checked:=true;
-
+    btnAutoPP.Caption:='åœæ­¢æŠ¢æ‹';
+    fweb.state.autoPP:=true;
+    setParamsToWeb();
+    fweb.initAddPriceStrategy();
+    saveStrategy(fweb.configFile);//ä¿å­˜ç­–ç•¥å‚æ•°
     if(fweb.state.VirtualSys)then
       begin
-        statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÄ£ÄâÇÀÅÄÏµÍ³£¬ÒÑ´ò¿ª×Ô¶¯ÇÀÅÄ';
+        statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæ¨¡æ‹ŸæŠ¢æ‹ç³»ç»Ÿï¼Œå·²æ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
         exit;
       end else begin
-        statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£º¹úÅÄÇÀÅÄÏµÍ³£¬ÒÑ´ò¿ª×Ô¶¯ÇÀÅÄ';
+        statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šå›½æ‹æŠ¢æ‹ç³»ç»Ÿï¼Œå·²æ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
       end;
   end else begin
-    btnAutoPP.Caption:='×Ô¶¯ÇÀÅÄ';
-        //×´Ì¬ÏÔÊ¾£º
-    //fweb.state.enterSys:=true;
+    btnAutoPP.Caption:='è‡ªåŠ¨æŠ¢æ‹';
     fweb.state.autoPP:=false;
-
     chkPrice.Checked:=false;
     if(fweb.state.VirtualSys)then
     begin
-      statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÄ£ÄâÇÀÅÄÏµÍ³£¬ÒÑÍ£Ö¹×Ô¶¯ÇÀÅÄ';
+      statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæ¨¡æ‹ŸæŠ¢æ‹ç³»ç»Ÿï¼Œå·²åœæ­¢è‡ªåŠ¨æŠ¢æ‹';
       exit;
     end else begin
-      statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£º¹úÅÄÇÀÅÄÏµÍ³£¬ÒÑÍ£Ö¹×Ô¶¯ÇÀÅÄ';
+      statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šå›½æ‹æŠ¢æ‹ç³»ç»Ÿï¼Œå·²åœæ­¢è‡ªåŠ¨æŠ¢æ‹';
     end;
   end;
 end;
 
 procedure TfMain.btnFormSaveClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.form','',trim(edtForm.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.form','',trim(edtForm.text));
 end;
 
 procedure TfMain.btnFormUpdateClick(Sender: TObject);
@@ -244,19 +301,23 @@ var
   rctWeb:tRect;
 begin
   if(not uAuth.authorize())then exit;
-  getParamsToCtl(uConfig.configFile2);
+  fweb.configFile:=uConfig.configFile2;
+  getParamsToCtl(fweb.configFile);
+  cmbStrategy.ItemIndex:=0;
+  cmbStrategy.OnChange(sender);
   setParamsToWeb();
   fWeb.Show;
   //https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc48/login.htm
   //fWeb.wb1.Navigate('https://paimai.alltobid.com'); //https://paimai.alltobid.com
   //fWeb.wb1.Navigate('https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc48/login.htm');
   //https://paimai2.alltobid.com/bid/b901b3c0ba414c3bb7c08761aedbff50/login.htm
+  webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.GPaddr);
-  //×´Ì¬ÏÔÊ¾£º
+  //çŠ¶æ€æ˜¾ç¤ºï¼š
   fweb.state.enterSys:=true;
   fweb.state.VirtualSys:=false;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£º¹úÅÄÇÀÅÄÏµÍ³£¬Î´´ò¿ª×Ô¶¯ÇÀÅÄ';
+  statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šå›½æ‹æŠ¢æ‹ç³»ç»Ÿï¼Œæœªæ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
   btnVirtual.Enabled:=false;
   //rctWeb:=rect(900,20,1860,780);
   //MoveWindow(fWeb.Handle,rctWeb.left,rctWeb.Top,rctWeb.Width,rctweb.Height,true);
@@ -264,7 +325,7 @@ end;
 
 procedure TfMain.btnPriceSaveClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.price','',trim(edtPrice.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.price','',trim(edtPrice.text));
 end;
 
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
@@ -274,32 +335,32 @@ end;
 
 procedure TfMain.btnSaveInputAddPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.inputaddprice','',trim(edtInputAddPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.inputaddprice','',trim(edtInputAddPriceParam.text));
 end;
 
 procedure TfMain.btnSaveInputPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.inputprice','',trim(edtInputPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.inputprice','',trim(edtInputPriceParam.text));
 end;
 
 procedure TfMain.btnSaveInputVerifyCodeParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.inputvercode','',trim(edtInputVerificationCodeParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.inputvercode','',trim(edtInputVerificationCodeParam.text));
 end;
 
 procedure TfMain.btnSaveSubmitAddPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.submitaddprice','',trim(edtSubmitAddPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitaddprice','',trim(edtSubmitAddPriceParam.text));
 end;
 
 procedure TfMain.btnSaveSubmitPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.submitprice','',trim(edtSubmitPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitprice','',trim(edtSubmitPriceParam.text));
 end;
 
 procedure TfMain.btnSaveSubmitVerificationCodeParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
 end;
 
 procedure TfMain.btnTestInputAddPriceParamClick(Sender: TObject);
@@ -348,16 +409,15 @@ end;
 
 procedure TfMain.btnTestPPClick(Sender: TObject);
 begin
-  saveStrategy();//±£´æ²ßÂÔ²ÎÊı
   fweb.InitAddPriceStrategy;
-  if(btnTestPP.Caption='²âÊÔÇÀÅÄ') then begin
-    btnTestPP.Caption:='Í£Ö¹²âÊÔ';
-    //chkPrice.Checked:=true;
+  if(btnTestPP.Caption='æµ‹è¯•æŠ¢æ‹') then begin
+    btnTestPP.Caption:='åœæ­¢æµ‹è¯•';
+    setParamsToWeb();
     fweb.mRemainSec:=20;
     timer2.Enabled:=true;
     timer1.Enabled:=false;
   end else begin
-    btnTestPP.Caption:='²âÊÔÇÀÅÄ';
+    btnTestPP.Caption:='æµ‹è¯•æŠ¢æ‹';
     fweb.mRemainSec:=2000;
     timer2.Enabled:=false;
     timer1.Enabled:=true;
@@ -425,16 +485,16 @@ begin
   try
     IdHTTP1.get('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=5G4tOXwCGG5buEFPrZGGykal&client_secret=ceAs9I9xHUzrxs0OWfEBed2HnA4CerLS',memstr);
   except
-    showmessage('»ñÈ¡token³ö´í');
+    showmessage('è·å–tokenå‡ºé”™');
     memstr.Free;
     btnToken.Enabled:=true;
     exit;
   end;
   ss:= memstr.DataString;
-  //token ÌáÈ¡
+  //token æå–
   i:= pos('access_token',ss);
   if i=0 then begin
-    showmessage('È¡µÃµÄtokenÎª¿Õ');; //»ñÈ¡ÊÚÈ¨³ö´í
+    showmessage('å–å¾—çš„tokenä¸ºç©º');; //è·å–æˆæƒå‡ºé”™
     memstr.Free;
     btnToken.Enabled:=true;
     exit;
@@ -446,10 +506,10 @@ begin
 
   edtToken.Text:= token;
   fweb.token:=token;
-  //±£´æ
+  //ä¿å­˜
   DateTimeToString(gettime,'yyyy-mm-dd',now());
-  uXml.setXmlNodeValue(uConfig.configFile,'pp.token','gettime',gettime);
-  uXml.setXmlNodeValue(uConfig.configFile,'pp.token','',token);
+  uXml.setXmlNodeValue(fweb.configFile,'pp.token','gettime',gettime);
+  uXml.setXmlNodeValue(fweb.configFile,'pp.token','',token);
   memstr.Free;
   btntoken.Enabled:=true;
   screen.Cursor:= crdefault;
@@ -464,7 +524,7 @@ procedure TfMain.btnUpdateFinishTimeClick(Sender: TObject);
 begin
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
   //fweb.mFinishTime:=VarToDateTime(trim(edtFinishTime.Text));
-  showmessage('¸üĞÂ³É¹¦£¡');
+  showmessage('æ›´æ–°æˆåŠŸï¼');
 end;
 
 procedure TfMain.btnUpdateInputPriceParamClick(Sender: TObject);
@@ -494,49 +554,54 @@ end;
 
 procedure TfMain.btnVirtualClick(Sender: TObject);
 begin
+  fweb.configFile:=uConfig.configFile;
   getParamsToCtl(uConfig.configFile);
   setParamsToWeb();
   fWeb.Show;
   //fWeb.wb1.Navigate('http://test.alltobid.com/moni/gerenbid.html');
+  webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.virtalAddr);
-  //×´Ì¬ÏÔÊ¾£º
+  //çŠ¶æ€æ˜¾ç¤ºï¼š
   fweb.state.enterSys:=true;
   fweb.state.VirtualSys:=true;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÄ£ÄâÇÀÅÄÏµÍ³£¬Î´´ò¿ª×Ô¶¯ÇÀÅÄ';
+  statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæ¨¡æ‹ŸæŠ¢æ‹ç³»ç»Ÿï¼Œæœªæ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
   btnGP.Enabled:=false;
+  if not Assigned(fweb.mVerg) then fweb.mVerg:=tstringlist.Create;
+  if not Assigned(fweb.mVerm) then fweb.mVerm:=tstringlist.Create;
+  fweb.mVerm.Clear;
+  fweb.mVerm.LoadFromFile(uconfig.verm);
 end;
 procedure TfMain.cmbStrategyChange(Sender: TObject);
 var
   say:string;
 begin
+  if(fweb.configFile='')then fweb.configFile:=uConfig.configFile;
 case cmbStrategy.ItemIndex of
 0:
   begin
-    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1','requestvercodetime');
-    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1','submitpricetime');
-    edtAddPrice.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1','addprice');
-    say:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1');
+    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1','requestvercodetime');
+    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1','submitpricetime');
+    edtAddPrice.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1','addprice');
+    say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1');
   end;
 1:
   begin
-    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2','requestvercodetime');
-    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2','submitpricetime');
-    edtAddPrice.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2','addprice');
-    say:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2');
+    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2','requestvercodetime');
+    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2','submitpricetime');
+    edtAddPrice.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2','addprice');
+    say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2');
   end;
 2:
   begin
-    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3','requestvercodetime');
-    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3','submitpricetime');
-    edtAddPrice.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3','addprice');
-    say:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3');
+    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3','requestvercodetime');
+    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3','submitpricetime');
+    edtAddPrice.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3','addprice');
+    say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3');
   end;
 end;
-  memStrategySay.Text:='²ßÂÔ'+inttostr(cmbStrategy.ItemIndex+1)+'ËµÃ÷£º '+#13#10+say;
-  fweb.mRequestVerCodeTime:=strtoint(edtRequestVerCodeTime.Text);
-  fweb.mSubmitVerCodeTime:=strtoint(edtSubmitVerCodeTime.Text);
-  fweb.mAddPrice:=strtoint(edtAddPrice.Text);
+  memStrategySay.Text:='ç­–ç•¥'+inttostr(cmbStrategy.ItemIndex+1)+'è¯´æ˜ï¼š '+#13#10+say;
+
 end;
 
 procedure TfMain.edtSubmitVerificationCodeParamChange(Sender: TObject);
@@ -545,7 +610,7 @@ begin
 end;
 
 {-----------------------------------------------------------------------------------
-½«²ÎÊıĞ´Èëµ½ä¯ÀÀÆ÷´°ÌåÖĞ;
+å°†å‚æ•°å†™å…¥åˆ°æµè§ˆå™¨çª—ä½“ä¸­;
 }
 procedure TfMain.setParamsToWeb();
 begin
@@ -563,12 +628,17 @@ begin
 
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text));
 
+  fweb.mAddPrice:=strtoint(trim(edtAddPrice.Text)); //
+  fweb.mRequestVerCodeTime:=strtoint(trim(edtRequestVercodeTime.Text)); //
+  fweb.mSubmitVerCodeTime:=strtoint(trim(edtSubmitVercodeTime.Text));
+  if(chkVerCode.Checked) then fweb.mVerCode:=trim(edtVerCode.Text) else fweb.mVerCode:='';
+
   fweb.virtalAddr:=trim(edtVirtualSysAddr.Text);
   fweb.GpAddr:=trim(edtGpSysAddr.Text);
   fweb.token:=trim(edttoken.Text);
 end;
 {-----------------------------------------------------------------------------------
-´ÓxmlÎÄ¼ş»ñÈ¡²ÎÊıĞ´Èëµ½¿Ø¼şÖĞ;
+ä»xmlæ–‡ä»¶è·å–å‚æ•°å†™å…¥åˆ°æ§ä»¶ä¸­;
 }
 procedure TfMain.getParamsToCtl(configFile:string);
 begin
@@ -586,22 +656,29 @@ begin
   edtInputAddPriceParam.Text:=uXml.GetXMLNodeValue(configFile,'pp.pos.inputaddprice') ;
   edtSubmitAddPriceParam.Text:=uXml.GetXMLNodeValue(configFile,'pp.pos.submitaddprice') ;
 
-  edtToken.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.token') ;
+  edtToken.Text:=uXml.GetXMLNodeValue(configFile,'pp.token') ;
 end;
 procedure TfMain.FormShow(Sender: TObject);
 begin
   fMain.Top:=0;
   fMain.Left:=0;
+  fweb.configFile:=uConfig.configFile;
   getParamsToCtl(uConfig.configFile);
   cmbStrategy.ItemIndex:=0;
-  self.Caption:=fweb.appName+'v'+fweb.appVersion+'ÁªÏµQQ1724523898';
-  statusbar1.Panels[2].Text:='µ±Ç°ÆÁÄ»·Ö±æÂÊ£º'+inttostr(screen.Width)+','+inttostr(screen.Height);
-  //×´Ì¬ÏÔÊ¾£º
+  cmbStrategy.OnChange(sender);
+  edtFinishTime.Text:=initendTime();
+  setParamstoWeb();
+  self.Caption:=fweb.appName+'v'+fweb.appVersion+'è”ç³»QQ1409232611';
+  statusbar1.Panels[2].Text:='å½“å‰å±å¹•åˆ†è¾¨ç‡ï¼š'+inttostr(screen.Width)+','+inttostr(screen.Height);
+  //çŠ¶æ€æ˜¾ç¤ºï¼š
   fweb.state.enterSys:=false;
   fweb.state.VirtualSys:=true;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÎ´½øÈëÏµÍ³';
+  statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæœªè¿›å…¥ç³»ç»Ÿ';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
+  webhook.hform:=fmain.Handle;
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);
@@ -614,17 +691,17 @@ begin
   if(fweb.state.autoPP)then begin
    if(r=-1)then btnAutoPP.Click();
   end else begin
-    if(fweb.mRemainSec<=30)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)and(r=1)then btnAutoPP.Click();
+    if(fweb.mRemainSec<=20)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)and(r=1)then btnAutoPP.Click();
   end;
   DateTimeToString(s,'yyyy-mm-dd-hh-nn ss ',now());
-  s:='µ±Ç°Ê±¼ä£º'+s;
-  if(r=1)then s:=s+'Ê£Óà£º'+inttostr(fweb.mRemainSec) else s:=s+'Ê£Óà£º-'+inttostr(fweb.mRemainSec);
+  s:='å½“å‰æ—¶é—´ï¼š'+s;
+  if(r=1)then s:=s+'å‰©ä½™ï¼š'+inttostr(fweb.mRemainSec) else s:=s+'å‰©ä½™ï¼š-'+inttostr(fweb.mRemainSec);
   statusbar1.Panels[1].Text:=s;
   getPrice();
-  if(fweb.Visible=true and chkFwebOnTop.Checked=true)then BringWindowToTop(fweb.handle);
+  //if(fweb.Visible=true and chkFwebOnTop.Checked=true)then BringWindowToTop(fweb.handle);
   if(fWeb.state.autoPP)then begin
     fWeb.PriceStrategy();
-    //fWeb.strategy1();//Ö´ĞĞ²ßÂÔ1
+    //fWeb.strategy1();//æ‰§è¡Œç­–ç•¥1
     //if(cmbStrategy.ItemIndex=0)then
     //  fWeb.AutoPriceStrategy
     //else
@@ -674,9 +751,9 @@ begin
   price:=trim(baiduIdentify(bmp));
   if(length(price)<=6) and (length(price)>=5) then begin
     fweb.mPrice:=strtoint(price);
-    statusbar1.Panels[2].Text:='µ±Ç°×îµÍ³É½»¼Û£º'+price;
+    statusbar1.Panels[2].Text:='å½“å‰æœ€ä½æˆäº¤ä»·ï¼š'+price;
   end;
-  //fmain.Caption:='»¦ÅÄÅÆÖúÊÖv1.0 '+mPrice;
+  //fmain.Caption:='æ²ªæ‹ç‰ŒåŠ©æ‰‹v1.0 '+mPrice;
 end;
 function TfMain.baiduIdentify(bmp:Tbitmap):string;
 var
@@ -707,7 +784,7 @@ begin
   iddec:=TIdEncoderMIME.Create;
   ss:= iddec.Encode(mem);  //  *******
   mem.Free;
-  //Ìá½»
+  //æäº¤
   str1:= tstringlist.Create;
   str1.Add('image='+ URLEncode(ss));
       //str1.savetoFile('d:\c.txt');

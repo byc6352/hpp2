@@ -122,7 +122,6 @@ type
     procedure getPrice();
     procedure saveStrategy(configFile:string);
     procedure httpMessage(var MSG:TMessage); message WM_CAP_WORK;
-    procedure getVerCode(url:string);
   public
     { Public declarations }
 
@@ -133,36 +132,9 @@ var
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
   function initEndTime():string;
-  function ReversePos(SubStr, S: String): Integer;
 implementation
 
 {$R *.dfm}
-function ReversePos(SubStr, S: String): Integer;
-var
-  i : Integer;
-begin
-  i := Pos(ReverseString(SubStr), ReverseString(S));
-  if i > 0 then i := Length(S) - i - Length(SubStr) + 2;
-  Result := i;
-end;
-procedure TfMain.getVerCode(url:string);
-var
-  filename,vercode:string;
-  i:integer;
-begin
-   if(fweb.state.autoPP=true and chkVerCode.Checked=true)then begin
-    i:=ReversePos('/',url);
-    filename:=midstr(url,i+1,length(url)-i-4);
-    if TryStrToInt(Trim(filename),i) then begin
-      if(fweb.state.VirtualSys) then
-        vercode:=fweb.mVerm[i-1]
-      else
-        vercode:=fweb.mVerg[i-1];
-      fweb.mVerCode:=vercode;
-      edtvercode.Text:=vercode;
-    end;
-  end;
-end;
 procedure TfMain.httpMessage(var msg:TMessage);
 var
   len,flag:integer;
@@ -184,7 +156,6 @@ begin
   2:begin
       say:='URL£º'+inttostr(len);
       data:=gUrl;
-      getVerCode(data);
     end;
   end;
   memInfo.Lines.Add(say);
@@ -311,7 +282,6 @@ begin
   //fWeb.wb1.Navigate('https://paimai.alltobid.com'); //https://paimai.alltobid.com
   //fWeb.wb1.Navigate('https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc48/login.htm');
   //https://paimai2.alltobid.com/bid/b901b3c0ba414c3bb7c08761aedbff50/login.htm
-  webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.GPaddr);
   //×´Ì¬ÏÔÊ¾£º
   fweb.state.enterSys:=true;
@@ -559,7 +529,6 @@ begin
   setParamsToWeb();
   fWeb.Show;
   //fWeb.wb1.Navigate('http://test.alltobid.com/moni/gerenbid.html');
-  webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.virtalAddr);
   //×´Ì¬ÏÔÊ¾£º
   fweb.state.enterSys:=true;

@@ -49,7 +49,7 @@ object fMain: TfMain
     TabOrder = 2
     object edtForm: TLabeledEdit
       Left = 425
-      Top = 28
+      Top = 31
       Width = 121
       Height = 21
       EditLabel.Width = 60
@@ -358,23 +358,44 @@ object fMain: TfMain
     end
     object edtFinishTime: TLabeledEdit
       Left = 77
-      Top = 26
+      Top = 31
       Width = 121
       Height = 21
       EditLabel.Width = 84
       EditLabel.Height = 13
       EditLabel.Caption = #25293#21334#32467#26463#26102#38388#28857
+      EditLabel.Color = clRed
+      EditLabel.ParentColor = False
       TabOrder = 29
-      Text = '2019/06/22 11:30:00'
+      Text = '2019/08/17 11:30:00'
     end
     object btnUpdateFinishTime: TButton
       Left = 199
-      Top = 24
+      Top = 27
       Width = 40
       Height = 25
       Caption = #26356#26032
       TabOrder = 30
       OnClick = btnUpdateFinishTimeClick
+    end
+    object chkVerCode: TCheckBox
+      Left = 262
+      Top = 13
+      Width = 108
+      Height = 17
+      Caption = #33258#21160#22635#20889#39564#35777#30721#65306
+      Checked = True
+      Color = clRed
+      ParentColor = False
+      State = cbChecked
+      TabOrder = 31
+    end
+    object edtVerCode: TEdit
+      Left = 261
+      Top = 31
+      Width = 121
+      Height = 21
+      TabOrder = 32
     end
   end
   object GroupBox2: TGroupBox
@@ -405,7 +426,7 @@ object fMain: TfMain
       Height = 50
       Lines.Strings = (
         #31574#30053'1'#35828#26126#65306
-        '  '#31163#25293#21334#32467#26463#21069'15'#31186#25552#20132#19968#20010#21152'500'#30340#20215#26684#65307)
+        '  '#31163#25293#21334#32467#26463#21069'5'#31186#25552#20132#19968#20010#21152'500'#30340#20215#26684#65307)
       TabOrder = 1
     end
     object edtAddPrice: TLabeledEdit
@@ -428,7 +449,7 @@ object fMain: TfMain
       EditLabel.Height = 13
       EditLabel.Caption = #30003#35831#39564#35777#30721#26102#38388#28857
       TabOrder = 3
-      Text = '15'
+      Text = '5'
     end
     object edtSubmitVerCodeTime: TLabeledEdit
       Left = 425
@@ -439,7 +460,7 @@ object fMain: TfMain
       EditLabel.Height = 13
       EditLabel.Caption = #25552#20132#39564#35777#30721#26102#38388#28857
       TabOrder = 4
-      Text = '5'
+      Text = '3'
     end
   end
   object btnGP: TButton
@@ -553,7 +574,7 @@ object fMain: TfMain
       EditLabel.Height = 13
       EditLabel.Caption = #27169#25311#31995#32479#22320#22336
       TabOrder = 0
-      Text = 'http://test.alltobid.com/moni/gerenbid.html'
+      Text = 'http://test.alltobid.com/moni/gerenlogin.html'
     end
     object edtGPsysAddr: TLabeledEdit
       Left = 4
@@ -564,9 +585,7 @@ object fMain: TfMain
       EditLabel.Height = 13
       EditLabel.Caption = #22269#25293#31995#32479#22320#22336
       TabOrder = 1
-      Text = 
-        'https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc4' +
-        '8/login.htm'
+      Text = 'https://paimai.alltobid.com'
     end
   end
   object Timer1: TTimer
@@ -609,5 +628,11 @@ object fMain: TfMain
     OnTimer = Timer2Timer
     Left = 720
     Top = 194
+  end
+  object IdSNTP1: TIdSNTP
+    Host = 'time.windows.com'
+    Port = 123
+    Left = 720
+    Top = 248
   end
 end

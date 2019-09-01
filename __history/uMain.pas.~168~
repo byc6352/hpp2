@@ -7,35 +7,30 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,uWeb,strutils, Vcl.ComCtrls,uXml,uconfig,
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
-  IdHTTP;
+  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP;
 
 type
   TfMain = class(TForm)
-    btnVirtual: TButton;
     StatusBar1: TStatusBar;
-    GroupBox1: TGroupBox;
-    GroupBox2: TGroupBox;
-    btnGP: TButton;
-    edtForm: TLabeledEdit;
     Timer1: TTimer;
-    GroupBox3: TGroupBox;
     chkPrice: TCheckBox;
-    imgPrice: TImage;
-    edtPrice: TLabeledEdit;
     IdHTTP1: TIdHTTP;
     IdSSLIOHandlerSocketOpenSSL1: TIdSSLIOHandlerSocketOpenSSL;
+    Timer2: TTimer;
+    IdSNTP1: TIdSNTP;
+    Page1: TPageControl;
+    TabSheet1: TTabSheet;
+    tsInfo: TTabSheet;
+    GroupBox1: TGroupBox;
+    edtForm: TLabeledEdit;
+    GroupBox3: TGroupBox;
+    imgPrice: TImage;
+    edtPrice: TLabeledEdit;
+    btnPriceSave: TButton;
+    btnPriceUpdate: TButton;
     chkFwebOnTop: TCheckBox;
     btnFormUpdate: TButton;
     btnFormSave: TButton;
-    btnPriceSave: TButton;
-    btnPriceUpdate: TButton;
-    GroupBox4: TGroupBox;
-    chkGetParam: TCheckBox;
-    imgGetParam: TImage;
-    edtGetParam: TLabeledEdit;
-    cmbStrategy: TComboBox;
-    memStrategySay: TMemo;
-    btnAutoPP: TButton;
     edtInputPriceParam: TLabeledEdit;
     btnUpdateInputPriceParam: TButton;
     btnSaveInputPriceParam: TButton;
@@ -48,19 +43,10 @@ type
     edtInputVerificationCodeParam: TLabeledEdit;
     btnUpdateInputVerifyCodeParam: TButton;
     btnSaveInputVerifyCodeParam: TButton;
-    btnTestPP: TButton;
-    edtAddPrice: TLabeledEdit;
     btnTestInputPriceParam: TButton;
     btnTestInputVerifyCodeParam: TButton;
     btnTestSubmitPriceParam: TButton;
     btnTestSubmitVerificationCodeParam: TButton;
-    Timer2: TTimer;
-    GroupBox5: TGroupBox;
-    btnToken: TButton;
-    edtToken: TEdit;
-    GroupBox6: TGroupBox;
-    edtVirtualSysAddr: TLabeledEdit;
-    edtGPsysAddr: TLabeledEdit;
     edtInputAddPriceParam: TLabeledEdit;
     btnUpdateInputAddPriceParam: TButton;
     btnSaveInputAddPriceParam: TButton;
@@ -69,12 +55,31 @@ type
     btnUpdateSubmitAddPriceParam: TButton;
     btnSaveSubmitAddPriceParam: TButton;
     btnTestSubmitAddPriceParam: TButton;
-    edtRequestVercodeTime: TLabeledEdit;
     edtFinishTime: TLabeledEdit;
     btnUpdateFinishTime: TButton;
-    edtSubmitVerCodeTime: TLabeledEdit;
     chkVerCode: TCheckBox;
     edtVerCode: TEdit;
+    GroupBox4: TGroupBox;
+    imgGetParam: TImage;
+    chkGetParam: TCheckBox;
+    edtGetParam: TLabeledEdit;
+    GroupBox5: TGroupBox;
+    btnToken: TButton;
+    edtToken: TEdit;
+    GroupBox2: TGroupBox;
+    cmbStrategy: TComboBox;
+    memStrategySay: TMemo;
+    edtAddPrice: TLabeledEdit;
+    edtRequestVercodeTime: TLabeledEdit;
+    edtSubmitVerCodeTime: TLabeledEdit;
+    GroupBox6: TGroupBox;
+    edtVirtualSysAddr: TLabeledEdit;
+    edtGPsysAddr: TLabeledEdit;
+    btnVirtual: TButton;
+    btnGP: TButton;
+    btnAutoPP: TButton;
+    btnTestPP: TButton;
+    memInfo: TMemo;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -115,7 +120,7 @@ type
     function baiduIdentify(bmp:Tbitmap):string;
     function getRectFromStr(s:string):tRect;
     procedure getPrice();
-    procedure saveStrategy();
+    procedure saveStrategy(configFile:string);
   public
     { Public declarations }
 
@@ -125,57 +130,82 @@ var
   fMain: TfMain;
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
+  function initEndTime():string;
 implementation
 
 {$R *.dfm}
-procedure TfMain.saveStrategy();
+function initEndTime():string;
+//const
+  //END_TIME='11:30:00';
+var
+  w:word;//每月第几个星期；
+  d:word;//当前是星期几；
+  r:integer;//时间比较结果
+  END_TIME_t:ttime; //11:30:00
+  endDateTime,dayString,datetimeString:string;
+  fmt: TFormatSettings;
+  endDateTimeT:tdatetime;
+  END_TIME:string;//END_TIME='11:30:00';
+begin
+  GetLocaleFormatSettings(GetThreadLocale, fmt);
+  END_TIME:='11'+fmt.TimeSeparator+'30'+fmt.TimeSeparator+'00';
+   w := WeekOfTheMonth(now()); //3
+   d:=DayOfTheWeek(Now);
+   END_TIME_t:=strtotime(END_TIME);
+   r:= CompareTime(now(), END_TIME_t);     //1
+   if (w=3) and (d=6) and (r=-1) then begin
+     dayString:='yyyy'+fmt.DateSeparator+'mm'+fmt.DateSeparator+'dd ';
+     DateTimeToString(endDateTime, dayString, now());
+     endDateTime:=endDateTime+END_TIME;
+
+   end else begin
+     endDateTimeT:=IncMinute(now(),5);
+     datetimeString:='yyyy'+fmt.DateSeparator+'mm'+fmt.DateSeparator+'dd hh:nn:00';
+     DateTimeToString(endDateTime, datetimeString, endDateTimeT);
+   end;
+   result:=endDateTime;
+   //edit1.text:=endDateTime;
+end;
+procedure TfMain.saveStrategy(configFile:string);
 var
   say:string;
 begin
-  fweb.mAddPrice:=strtoint(trim(edtAddPrice.Text)); //
-  fweb.mRequestVerCodeTime:=strtoint(trim(edtRequestVercodeTime.Text)); //
-  fweb.mSubmitVerCodeTime:=strtoint(trim(edtSubmitVercodeTime.Text));
-  if(chkVerCode.Checked) then fweb.mVerCode:=trim(edtVerCode.Text) else fweb.mVerCode:='';
+
   say:='离拍卖结束前'+edtRequestVercodeTime.Text+'秒提交一个加'+inttostr(fweb.mAddPrice)+'的价格；';
   memStrategySay.Text:='策略'+inttostr(cmbStrategy.ItemIndex+1)+'说明： '+#13#10+say;
 
   if(cmbStrategy.ItemIndex=0) then begin
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','requestvercodetime',edtRequestVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','submitpricetime',edtSubmitVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','addprice',edtAddPrice.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy1','',say);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','requestvercodetime',edtRequestVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','submitpricetime',edtSubmitVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','addprice',edtAddPrice.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','',say);
   end else if(cmbStrategy.ItemIndex=1) then begin
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','requestvercodetime',edtRequestVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','submitpricetime',edtSubmitVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','addprice',edtAddPrice.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy2','requestvercodetime',edtRequestVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy2','submitpricetime',edtSubmitVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy2','addprice',edtAddPrice.Text);
     uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy2','',say);
   end else if(cmbStrategy.ItemIndex=2) then begin
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','requestvercodetime',edtRequestVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','submitpricetime',edtSubmitVercodeTime.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','addprice',edtAddPrice.Text);
-    uXml.setXmlNodeValue(uConfig.configFile,'pp.strategy.strategy3','',say);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','requestvercodetime',edtRequestVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','submitpricetime',edtSubmitVercodeTime.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','addprice',edtAddPrice.Text);
+    uXml.setXmlNodeValue(configFile,'pp.strategy.strategy3','',say);
   end;
 end;
 procedure TfMain.btnAutoPPClick(Sender: TObject);
 begin
-  saveStrategy();//保存策略参数
-  fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
-
-  fweb.initAddPriceStrategy();
 
   if(btnAutoPP.Caption='自动抢拍')then
   begin
-    btnAutoPP.Caption:='停止抢拍';
-    //状态显示：
-    //fweb.state.enterSys:=true;
-    fweb.state.autoPP:=true;
     if(fweb.state.enterSys=false)then
     begin
       showmessage('必须先进入抢拍系统，才能开始抢拍！');
       exit;
     end;
-    //chkPrice.Checked:=true;
-
+    btnAutoPP.Caption:='停止抢拍';
+    fweb.state.autoPP:=true;
+    setParamsToWeb();
+    fweb.initAddPriceStrategy();
+    saveStrategy(fweb.configFile);//保存策略参数
     if(fweb.state.VirtualSys)then
       begin
         statusbar1.Panels[0].Text:='当前状态：模拟抢拍系统，已打开自动抢拍';
@@ -185,10 +215,7 @@ begin
       end;
   end else begin
     btnAutoPP.Caption:='自动抢拍';
-        //状态显示：
-    //fweb.state.enterSys:=true;
     fweb.state.autoPP:=false;
-
     chkPrice.Checked:=false;
     if(fweb.state.VirtualSys)then
     begin
@@ -202,7 +229,7 @@ end;
 
 procedure TfMain.btnFormSaveClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.form','',trim(edtForm.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.form','',trim(edtForm.text));
 end;
 
 procedure TfMain.btnFormUpdateClick(Sender: TObject);
@@ -216,7 +243,10 @@ var
   rctWeb:tRect;
 begin
   if(not uAuth.authorize())then exit;
-  getParamsToCtl(uConfig.configFile2);
+  fweb.configFile:=uConfig.configFile2;
+  getParamsToCtl(fweb.configFile);
+  cmbStrategy.ItemIndex:=0;
+  cmbStrategy.OnChange(sender);
   setParamsToWeb();
   fWeb.Show;
   //https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc48/login.htm
@@ -236,7 +266,7 @@ end;
 
 procedure TfMain.btnPriceSaveClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.price','',trim(edtPrice.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.price','',trim(edtPrice.text));
 end;
 
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
@@ -246,32 +276,32 @@ end;
 
 procedure TfMain.btnSaveInputAddPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.inputaddprice','',trim(edtInputAddPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.inputaddprice','',trim(edtInputAddPriceParam.text));
 end;
 
 procedure TfMain.btnSaveInputPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.inputprice','',trim(edtInputPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.inputprice','',trim(edtInputPriceParam.text));
 end;
 
 procedure TfMain.btnSaveInputVerifyCodeParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.inputvercode','',trim(edtInputVerificationCodeParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.inputvercode','',trim(edtInputVerificationCodeParam.text));
 end;
 
 procedure TfMain.btnSaveSubmitAddPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.submitaddprice','',trim(edtSubmitAddPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitaddprice','',trim(edtSubmitAddPriceParam.text));
 end;
 
 procedure TfMain.btnSaveSubmitPriceParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.submitprice','',trim(edtSubmitPriceParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitprice','',trim(edtSubmitPriceParam.text));
 end;
 
 procedure TfMain.btnSaveSubmitVerificationCodeParamClick(Sender: TObject);
 begin
-  uXml.SetXMLNodeSpecialValue(uConfig.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
+  uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
 end;
 
 procedure TfMain.btnTestInputAddPriceParamClick(Sender: TObject);
@@ -320,17 +350,18 @@ end;
 
 procedure TfMain.btnTestPPClick(Sender: TObject);
 begin
-  saveStrategy();//保存策略参数
   fweb.InitAddPriceStrategy;
   if(btnTestPP.Caption='测试抢拍') then begin
     btnTestPP.Caption:='停止测试';
-    //chkPrice.Checked:=true;
+    setParamsToWeb();
     fweb.mRemainSec:=20;
     timer2.Enabled:=true;
+    timer1.Enabled:=false;
   end else begin
     btnTestPP.Caption:='测试抢拍';
     fweb.mRemainSec:=2000;
     timer2.Enabled:=false;
+    timer1.Enabled:=true;
   end;
 
 end;
@@ -418,8 +449,8 @@ begin
   fweb.token:=token;
   //保存
   DateTimeToString(gettime,'yyyy-mm-dd',now());
-  uXml.setXmlNodeValue(uConfig.configFile,'pp.token','gettime',gettime);
-  uXml.setXmlNodeValue(uConfig.configFile,'pp.token','',token);
+  uXml.setXmlNodeValue(fweb.configFile,'pp.token','gettime',gettime);
+  uXml.setXmlNodeValue(fweb.configFile,'pp.token','',token);
   memstr.Free;
   btntoken.Enabled:=true;
   screen.Cursor:= crdefault;
@@ -464,6 +495,7 @@ end;
 
 procedure TfMain.btnVirtualClick(Sender: TObject);
 begin
+  fweb.configFile:=uConfig.configFile;
   getParamsToCtl(uConfig.configFile);
   setParamsToWeb();
   fWeb.Show;
@@ -475,38 +507,38 @@ begin
   fweb.state.autoPP:=false;
   statusbar1.Panels[0].Text:='当前状态：模拟抢拍系统，未打开自动抢拍';
   btnGP.Enabled:=false;
+  fweb.
 end;
 procedure TfMain.cmbStrategyChange(Sender: TObject);
 var
   say:string;
 begin
+  if(fweb.configFile='')then fweb.configFile:=uConfig.configFile;
 case cmbStrategy.ItemIndex of
 0:
   begin
-    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1','requestvercodetime');
-    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1','submitpricetime');
-    edtAddPrice.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1','addprice');
-    say:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy1');
+    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1','requestvercodetime');
+    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1','submitpricetime');
+    edtAddPrice.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1','addprice');
+    say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy1');
   end;
 1:
   begin
-    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2','requestvercodetime');
-    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2','submitpricetime');
-    edtAddPrice.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2','addprice');
-    say:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy2');
+    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2','requestvercodetime');
+    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2','submitpricetime');
+    edtAddPrice.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2','addprice');
+    say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy2');
   end;
 2:
   begin
-    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3','requestvercodetime');
-    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3','submitpricetime');
-    edtAddPrice.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3','addprice');
-    say:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.strategy.strategy3');
+    edtRequestVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3','requestvercodetime');
+    edtSubmitVerCodeTime.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3','submitpricetime');
+    edtAddPrice.Text:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3','addprice');
+    say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3');
   end;
 end;
   memStrategySay.Text:='策略'+inttostr(cmbStrategy.ItemIndex+1)+'说明： '+#13#10+say;
-  fweb.mRequestVerCodeTime:=strtoint(edtRequestVerCodeTime.Text);
-  fweb.mSubmitVerCodeTime:=strtoint(edtSubmitVerCodeTime.Text);
-  fweb.mAddPrice:=strtoint(edtAddPrice.Text);
+
 end;
 
 procedure TfMain.edtSubmitVerificationCodeParamChange(Sender: TObject);
@@ -533,6 +565,11 @@ begin
 
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text));
 
+  fweb.mAddPrice:=strtoint(trim(edtAddPrice.Text)); //
+  fweb.mRequestVerCodeTime:=strtoint(trim(edtRequestVercodeTime.Text)); //
+  fweb.mSubmitVerCodeTime:=strtoint(trim(edtSubmitVercodeTime.Text));
+  if(chkVerCode.Checked) then fweb.mVerCode:=trim(edtVerCode.Text) else fweb.mVerCode:='';
+
   fweb.virtalAddr:=trim(edtVirtualSysAddr.Text);
   fweb.GpAddr:=trim(edtGpSysAddr.Text);
   fweb.token:=trim(edttoken.Text);
@@ -556,15 +593,19 @@ begin
   edtInputAddPriceParam.Text:=uXml.GetXMLNodeValue(configFile,'pp.pos.inputaddprice') ;
   edtSubmitAddPriceParam.Text:=uXml.GetXMLNodeValue(configFile,'pp.pos.submitaddprice') ;
 
-  edtToken.Text:=uXml.GetXMLNodeValue(uConfig.configFile,'pp.token') ;
+  edtToken.Text:=uXml.GetXMLNodeValue(configFile,'pp.token') ;
 end;
 procedure TfMain.FormShow(Sender: TObject);
 begin
   fMain.Top:=0;
   fMain.Left:=0;
+  fweb.configFile:=uConfig.configFile;
   getParamsToCtl(uConfig.configFile);
   cmbStrategy.ItemIndex:=0;
-  self.Caption:=fweb.appName+'v'+fweb.appVersion+'联系QQ1724523898';
+  cmbStrategy.OnChange(sender);
+  edtFinishTime.Text:=initendTime();
+  setParamstoWeb();
+  self.Caption:=fweb.appName+'v'+fweb.appVersion+'联系QQ1409232611';
   statusbar1.Panels[2].Text:='当前屏幕分辨率：'+inttostr(screen.Width)+','+inttostr(screen.Height);
   //状态显示：
   fweb.state.enterSys:=false;
@@ -572,23 +613,28 @@ begin
   fweb.state.autoPP:=false;
   statusbar1.Panels[0].Text:='当前状态：未进入系统';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);
 var
   s:string;
+  r:integer;
 begin
-  DateTimeToString(s,'yyyy-mm-dd-hh-nn ss zzz',now());
-  s:='当前时间：'+s;
   fweb.mRemainSec:=SecondsBetween(now(),fweb.mFinishTime);
+  r := CompareDateTime(fweb.mFinishTime,now()); //1
   if(fweb.state.autoPP)then begin
-   s:=s+'剩余：'+inttostr(fweb.mRemainSec);
+   if(r=-1)then btnAutoPP.Click();
   end else begin
-    if(fweb.mRemainSec<=30)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)then btnAutoPP.Click();
+    if(fweb.mRemainSec<=20)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)and(r=1)then btnAutoPP.Click();
   end;
+  DateTimeToString(s,'yyyy-mm-dd-hh-nn ss ',now());
+  s:='当前时间：'+s;
+  if(r=1)then s:=s+'剩余：'+inttostr(fweb.mRemainSec) else s:=s+'剩余：-'+inttostr(fweb.mRemainSec);
   statusbar1.Panels[1].Text:=s;
   getPrice();
-  if(fweb.Visible=true and chkFwebOnTop.Checked=true)then BringWindowToTop(fweb.handle);
+  //if(fweb.Visible=true and chkFwebOnTop.Checked=true)then BringWindowToTop(fweb.handle);
   if(fWeb.state.autoPP)then begin
     fWeb.PriceStrategy();
     //fWeb.strategy1();//执行策略1
@@ -602,7 +648,8 @@ end;
 procedure TfMain.Timer2Timer(Sender: TObject);
 begin
   fweb.mRemainSec:=fweb.mRemainSec-1;
-  fweb.AddPricestrategy;
+  //fweb.AddPricestrategy;
+  fweb.PriceStrategy;
   if(fweb.mRemainSec<=0)then begin
     btnTestPP.Click();
   end;

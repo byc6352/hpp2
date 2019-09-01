@@ -9,9 +9,9 @@ uses
 
 type
   Tstate=record
-    enterSys:boolean;//´ò¿ªä¯ÀÀÆ÷Ã»
-    VirtualSys:boolean;//Ä£ÄâÏµÍ³Âğ
-    autoPP:boolean;//Æô¶¯×Ô¶¯ÇÀÅÄÂğ
+    enterSys:boolean;//æ‰“å¼€æµè§ˆå™¨æ²¡
+    VirtualSys:boolean;//æ¨¡æ‹Ÿç³»ç»Ÿå—
+    autoPP:boolean;//å¯åŠ¨è‡ªåŠ¨æŠ¢æ‹å—
   end;
   TfWeb = class(TForm)
     wb1: TWebBrowser;
@@ -31,10 +31,10 @@ type
   private
     { Private declarations }
     mIsRct:boolean;
-    //paramPos1:tPoint;//²ÎÊı×ø±ê
-    //**********************************ÇÀÅÄ²ßÂÔ**************************************************
+    //paramPos1:tPoint;//å‚æ•°åæ ‡
+    //**********************************æŠ¢æ‹ç­–ç•¥**************************************************
 
-    procedure getParam(Msg: tagMSG);//»ñÈ¡²ÎÊı
+    procedure getParam(Msg: tagMSG);//è·å–å‚æ•°
     procedure GenerateJPEGfromBrowser(browser: iWebBrowser2;
                                   jpegFQFilename: string; srcHeight:
                                   integer; srcWidth: integer;
@@ -45,27 +45,27 @@ type
 
   public
     { Public declarations }
-    appName,appVersion:string;//ÏµÍ³Ãû³Æ£¬°æ±¾ºÅ
-    state:Tstate;//ÏµÍ³×´Ì¬
-    rctParam,rctForm,rctPrice,rctInputPrice,rctSubmitPrice,rctInputVerificationCode,rctSubmitVerificationCode:tRect; //¿Ø¼ş×ø±ê²ÎÊı
-    rctInputAddPrice,rctSubmitAddPrice:tRect; //¿Ø¼ş×ø±ê²ÎÊı
-    mPrice:integer; //µ±Ç°¼Û¸ñ
-    mIsSubmitPrice,mIsSubmitVerifiCode:boolean;//ÊÇ·ñÌá½»¼Û¸ñ£¬ÊÇ·ñÌá½»ÑéÖ¤Âë
-    mIsAddPrice:boolean;//ÊÇ·ñÒÑ¼Ó¼Û
-    mIsSubmitPrice1,mIsSubmitVerifiCode1:boolean;//ÊÇ·ñÌá½»¼Û¸ñ£¬ÊÇ·ñÌá½»ÑéÖ¤Âë
-    //**********************************ÇÀÅÄ²ßÂÔ**************************************************
-    mFinishTime:tDatetime;//ÇÀÅÄÏßÊøÊ±¼äµã
-    mRemainSec,mRemainSec1:integer;//Ê£ÏÂµÄÃëÊı
-    virtalAddr,GPaddr,mVerCode:string;//µØÖ·,ÑéÖ¤Âë
-    mAddPrice:integer;//¼Ó¼Û·ù¶È
-    mRequestVerCodeTime:integer;//³ö¼ÛÊ±¼äµã
-    mSubmitVerCodeTime:integer;//Ìá½»·şÎñÆ÷Ê±¼äµã
-    configFile:string;//µ±Ç°ÅäÖÃÎÄ¼ş£»
+    appName,appVersion:string;//ç³»ç»Ÿåç§°ï¼Œç‰ˆæœ¬å·
+    state:Tstate;//ç³»ç»ŸçŠ¶æ€
+    rctParam,rctForm,rctPrice,rctInputPrice,rctSubmitPrice,rctInputVerificationCode,rctSubmitVerificationCode:tRect; //æ§ä»¶åæ ‡å‚æ•°
+    rctInputAddPrice,rctSubmitAddPrice:tRect; //æ§ä»¶åæ ‡å‚æ•°
+    mPrice:integer; //å½“å‰ä»·æ ¼
+    mIsSubmitPrice,mIsSubmitVerifiCode:boolean;//æ˜¯å¦æäº¤ä»·æ ¼ï¼Œæ˜¯å¦æäº¤éªŒè¯ç 
+    mIsAddPrice:boolean;//æ˜¯å¦å·²åŠ ä»·
+    mIsSubmitPrice1,mIsSubmitVerifiCode1:boolean;//æ˜¯å¦æäº¤ä»·æ ¼ï¼Œæ˜¯å¦æäº¤éªŒè¯ç 
+    //**********************************æŠ¢æ‹ç­–ç•¥**************************************************
+    mFinishTime:tDatetime;//æŠ¢æ‹çº¿æŸæ—¶é—´ç‚¹
+    mRemainSec,mRemainSec1:integer;//å‰©ä¸‹çš„ç§’æ•°
+    virtalAddr,GPaddr,mVerCode:string;//åœ°å€,éªŒè¯ç 
+    mAddPrice:integer;//åŠ ä»·å¹…åº¦
+    mRequestVerCodeTime:integer;//å‡ºä»·æ—¶é—´ç‚¹
+    mSubmitVerCodeTime:integer;//æäº¤æœåŠ¡å™¨æ—¶é—´ç‚¹
+    configFile:string;//å½“å‰é…ç½®æ–‡ä»¶ï¼›
     token:string;
-    mVerg,mVerm:tstrings;//ÑéÖ¤Âë£»
+    mVerg,mVerm:tstrings;//éªŒè¯ç ï¼›
     procedure strategy1();
     procedure Initstrategy1();
-    procedure strategy1Test();//²âÊÔÇÀÅÄ²ßÂÔ1
+    procedure strategy1Test();//æµ‹è¯•æŠ¢æ‹ç­–ç•¥1
     procedure SaveScreen();
     procedure AddPriceStrategy();
     procedure InitAddPriceStrategy();
@@ -90,7 +90,7 @@ begin
   bmp.SaveToFile(filename);
   bmp.Destroy;
 end;
-procedure TfWeb.getParam(Msg: tagMSG);//»ñÈ¡²ÎÊı
+procedure TfWeb.getParam(Msg: tagMSG);//è·å–å‚æ•°
 var
   pos1,pos2: TPoint;
   bmp:tbitmap;
@@ -98,14 +98,14 @@ begin
   if(fMain.chkGetParam.Checked=false)then exit;
   if IsChild(wb1.Handle, Msg.Hwnd)=false then exit;
   if(Msg.message = WM_LBUTTONDOWN)then begin
-    GetCursorPos(pos1); //µÃµ½¹â±êÎ»ÖÃ
+    GetCursorPos(pos1); //å¾—åˆ°å…‰æ ‡ä½ç½®
     pos2.X:=0;pos2.Y:=0;
     rctParam:=rect(pos1,pos2);
     mIsRct:=true;
   end;
   if(Msg.message = WM_LBUTTONUP)then begin
     mIsRct:=false;
-    GetCursorPos(pos2); //µÃµ½¹â±êÎ»ÖÃ
+    GetCursorPos(pos2); //å¾—åˆ°å…‰æ ‡ä½ç½®
     rctParam.BottomRight:=pos2;
     bmp:=uFuncs.captureScreen(rctParam.Left,rctParam.Top,rctParam.Right,rctParam.Bottom);
     fMain.imgGetParam.Picture.Bitmap.Assign(bmp);
@@ -119,9 +119,9 @@ var
 begin
   if IsChild(wb1.Handle, Msg.Hwnd) and (Msg.message = WM_MOUSEMOVE) and (fmain.chkGetParam.Checked=true) then
   begin
-    GetCursorPos(pos); //µÃµ½¹â±êÎ»ÖÃ
-    //fMain.lbPos.Caption:='µ±Ç°×ø±ê£º'+inttostr(pos.X)+','+inttostr(pos.Y);
-    fMain.StatusBar1.Panels[2].Text:='µ±Ç°×ø±ê£º'+inttostr(pos.X)+','+inttostr(pos.Y);
+    GetCursorPos(pos); //å¾—åˆ°å…‰æ ‡ä½ç½®
+    //fMain.lbPos.Caption:='å½“å‰åæ ‡ï¼š'+inttostr(pos.X)+','+inttostr(pos.Y);
+    fMain.StatusBar1.Panels[2].Text:='å½“å‰åæ ‡ï¼š'+inttostr(pos.X)+','+inttostr(pos.Y);
     if(mIsRct)then begin
       rctParam.BottomRight:=pos;
       //Canvas.Rectangle(rctParam);
@@ -147,7 +147,7 @@ begin
   fWeb.top:=rctForm.Top;
   fWeb.width:=rctForm.Width;
   fWeb.height:=rctForm.Height;
-    //´°¿ÚÖÃ¶¥
+    //çª—å£ç½®é¡¶
   BringWindowToTop(fweb.handle);
   //SetWindowPos(fweb.handle,HWND_TOPMOST,rctForm.Left,rctForm.Top,rctForm.Width,rctForm.Height,SWP_NOMOVE  or  SWP_NOSIZE);
   //wb1.Navigate('http://test.alltobid.com/moni/gerenbid.html');
@@ -195,14 +195,14 @@ end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
   var Cancel: WordBool);
 begin
-ppDisp := wb2.Application; // ĞÂµÄ´°¿ÚÏÈÖ¸ÏòWebBrowser2
+ppDisp := wb2.Application; // æ–°çš„çª—å£å…ˆæŒ‡å‘WebBrowser2
 end;
 
 procedure TfWeb.wb2BeforeNavigate2(ASender: TObject; const pDisp: IDispatch;
   const URL, Flags, TargetFrameName, PostData, Headers: OleVariant;
   var Cancel: WordBool);
 begin
-  wb1.Navigate(string(URL)); // ÔÙÖ¸»ØWebBrowser1
+  wb1.Navigate(string(URL)); // å†æŒ‡å›WebBrowser1
   Cancel := True;
 end;
 
@@ -259,84 +259,84 @@ begin { GenerateJPEGfromBrowser }
     // error handler code
   end; { try }
 end; { GenerateJPEGfromBrowser }
-//**********************************ÇÀÅÄ²ßÂÔ**************************************************
+//**********************************æŠ¢æ‹ç­–ç•¥**************************************************
 procedure TfWeb.Initstrategy1();
 begin
   mIsSubmitPrice:=false;
   mIsSubmitVerifiCode:=false;
 end;
 {-------------------------------------------------------------------------
- ÇÀÅÄ²ßÂÔ1£º
+ æŠ¢æ‹ç­–ç•¥1ï¼š
 }
 procedure TfWeb.strategy1();
 const
-  REMAIN_SEC_SUBMIT_PRICE:integer=15;//³ö¼ÛÊ±¼äµã
-  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//Ìá½»ÑéÖ¤ÂëÊ±¼äµã
+  REMAIN_SEC_SUBMIT_PRICE:integer=15;//å‡ºä»·æ—¶é—´ç‚¹
+  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//æäº¤éªŒè¯ç æ—¶é—´ç‚¹
 var
-  inputPrice:integer; //¼ÆËãµÃµ½µÄ¼Û¸ñ
+  inputPrice:integer; //è®¡ç®—å¾—åˆ°çš„ä»·æ ¼
 begin
-  if(mRemainSec<REMAIN_SEC_SUBMIT_PRICE) and (mIsSubmitPrice=false)then //¿ªÊ¼Ìá½»¼Û¸ñ£º
+  if(mRemainSec<REMAIN_SEC_SUBMIT_PRICE) and (mIsSubmitPrice=false)then //å¼€å§‹æäº¤ä»·æ ¼ï¼š
   begin
     mIsSubmitPrice:=true;
-    //1.ÊäÈë¼Û¸ñ£»
+    //1.è¾“å…¥ä»·æ ¼ï¼›
     inputPrice:=mPrice+mAddPrice;
     mouseClick(rctInputPrice.CenterPoint);
     inputstring(inttostr(inputPrice));
-    //2.µã»÷Ìá½»
+    //2.ç‚¹å‡»æäº¤
     mouseClick(rctSubmitPrice.CenterPoint);
-    //3.µã»÷ÊäÈëÑéÖ¤ÂëÎÄ±¾¿ò£º
+    //3.ç‚¹å‡»è¾“å…¥éªŒè¯ç æ–‡æœ¬æ¡†ï¼š
     mouseClick(rctInputVerificationCode.CenterPoint);
   end;
-  if(mRemainSec<REMAIN_SEC_SUBMIT_VERCODE) and (mIsSubmitVerifiCode=false)then //¿ªÊ¼Ìá½»ÑéÖ¤Âë£º
+  if(mRemainSec<REMAIN_SEC_SUBMIT_VERCODE) and (mIsSubmitVerifiCode=false)then //å¼€å§‹æäº¤éªŒè¯ç ï¼š
   begin
     mIsSubmitVerifiCode:=true;
-    //µã»÷Ìá½»
+    //ç‚¹å‡»æäº¤
     mouseClick(rctSubmitVerificationCode.CenterPoint);
   end;
 end;
 {-------------------------------------------------------------------------
- ÇÀÅÄ²ßÂÔ1£º
+ æŠ¢æ‹ç­–ç•¥1ï¼š
 }
 procedure TfWeb.strategy1Test();
 const
-  REMAIN_SEC_SUBMIT_PRICE:integer=15;//³ö¼ÛÊ±¼äµã
-  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//Ìá½»ÑéÖ¤ÂëÊ±¼äµã
+  REMAIN_SEC_SUBMIT_PRICE:integer=15;//å‡ºä»·æ—¶é—´ç‚¹
+  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//æäº¤éªŒè¯ç æ—¶é—´ç‚¹
 var
-  inputPrice:integer; //¼ÆËãµÃµ½µÄ¼Û¸ñ
+  inputPrice:integer; //è®¡ç®—å¾—åˆ°çš„ä»·æ ¼
 begin
-  if(mRemainSec1<REMAIN_SEC_SUBMIT_PRICE) and (mIsSubmitPrice1=false)then //¿ªÊ¼Ìá½»¼Û¸ñ£º
+  if(mRemainSec1<REMAIN_SEC_SUBMIT_PRICE) and (mIsSubmitPrice1=false)then //å¼€å§‹æäº¤ä»·æ ¼ï¼š
   begin
     mIsSubmitPrice1:=true;
-    //1.ÊäÈë¼Û¸ñ£»
+    //1.è¾“å…¥ä»·æ ¼ï¼›
     inputPrice:=mPrice+mAddPrice;
     mouseClick(rctInputPrice.CenterPoint);
     inputstring(inttostr(inputPrice));
-    //2.µã»÷Ìá½»
+    //2.ç‚¹å‡»æäº¤
     mouseClick(rctSubmitPrice.CenterPoint);
-    //3.µã»÷ÊäÈëÑéÖ¤ÂëÎÄ±¾¿ò£º
+    //3.ç‚¹å‡»è¾“å…¥éªŒè¯ç æ–‡æœ¬æ¡†ï¼š
     mouseClick(rctInputVerificationCode.CenterPoint);
   end;
-  if(mRemainSec1<REMAIN_SEC_SUBMIT_VERCODE) and (mIsSubmitVerifiCode1=false)then //¿ªÊ¼Ìá½»ÑéÖ¤Âë£º
+  if(mRemainSec1<REMAIN_SEC_SUBMIT_VERCODE) and (mIsSubmitVerifiCode1=false)then //å¼€å§‹æäº¤éªŒè¯ç ï¼š
   begin
     mIsSubmitVerifiCode1:=true;
-    //µã»÷Ìá½»
+    //ç‚¹å‡»æäº¤
     mouseClick(rctSubmitVerificationCode.CenterPoint);
   end;
 end;
-//µã»÷Êó±ê£º°üº¬ÒÆ¶¯
+//ç‚¹å‡»é¼ æ ‡ï¼šåŒ…å«ç§»åŠ¨
 procedure TfWeb.mouseClick(pos:tPoint);
 begin
   SetCursorPos(pos.X,pos.Y);
   Mouse_Event(MOUSEEVENTF_LEFTDOWN,pos.X,pos.Y,0,0);
   Mouse_Event(MOUSEEVENTF_LEFTUP,pos.X,pos.Y,0,0);
 end;
-//Ä£Äâ¼üÅÌÊäÈë
+//æ¨¡æ‹Ÿé”®ç›˜è¾“å…¥
 procedure TfWeb.keyPress(k:char);
 begin
   keybd_event(ord(k), MapVirtualKey(ord(k), 0), 0, 0);
   keybd_event(ord(k), MapVirtualKey(ord(k), 0), KEYEVENTF_KEYUP, 0);
 end;
-//Ä£Äâ¼üÅÌÊäÈë×Ö·û´®
+//æ¨¡æ‹Ÿé”®ç›˜è¾“å…¥å­—ç¬¦ä¸²
 procedure TfWeb.inputstring(s:string);
 var
   i:integer;
@@ -348,7 +348,7 @@ begin
     keyPress(k);
   end;
 end;
-//**********************************¼Ó¼ÛÇÀÅÄ²ßÂÔ**************************************************
+//**********************************åŠ ä»·æŠ¢æ‹ç­–ç•¥**************************************************
 procedure TfWeb.InitAddPriceStrategy();
 begin
   mIsAddPrice:=false;
@@ -356,36 +356,36 @@ begin
   mIsSubmitVerifiCode:=false;
 end;
 {-------------------------------------------------------------------------
- ¼Ó¼ÛÇÀÅÄ²ßÂÔ1£º
+ åŠ ä»·æŠ¢æ‹ç­–ç•¥1ï¼š
 }
 procedure TfWeb.AddPriceStrategy();
 const
-  REMAIN_SEC_SUBMIT_PRICE:integer=15;//³ö¼ÛÊ±¼äµã
-  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//Ìá½»ÑéÖ¤ÂëÊ±¼äµã
+  REMAIN_SEC_SUBMIT_PRICE:integer=15;//å‡ºä»·æ—¶é—´ç‚¹
+  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//æäº¤éªŒè¯ç æ—¶é—´ç‚¹
 var
   pos:tPoint;
 begin
-  if(mIsAddPrice=false)then begin //1.ÊäÈë¼Ó¼ÛÖµ
+  if(mIsAddPrice=false)then begin //1.è¾“å…¥åŠ ä»·å€¼
      mIsAddPrice:=true;
      mouseClick(rctInputAddPrice.CenterPoint);
      inputstring(inttostr(mAddPrice));
   end;
-  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //¿ªÊ¼Ìá½»¼Û¸ñ£º
+  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //å¼€å§‹æäº¤ä»·æ ¼ï¼š
   begin
     mIsSubmitPrice:=true;
-    //1.µã»÷¼Ó¼Û°´Å¥£»
+    //1.ç‚¹å‡»åŠ ä»·æŒ‰é’®ï¼›
     mouseClick(rctSubmitAddPrice.CenterPoint);
     sleep(10);
-    //2.µã»÷Ìá½»
+    //2.ç‚¹å‡»æäº¤
     mouseClick(rctSubmitPrice.CenterPoint);
     sleep(1000);
-    //3.µã»÷ÊäÈëÑéÖ¤ÂëÎÄ±¾¿ò£º
+    //3.ç‚¹å‡»è¾“å…¥éªŒè¯ç æ–‡æœ¬æ¡†ï¼š
     mouseClick(rctInputVerificationCode.CenterPoint);
   end;
-  if(mRemainSec<mSubmitVerCodeTime) and (mIsSubmitVerifiCode=false)then //¿ªÊ¼Ìá½»ÑéÖ¤Âë£º
+  if(mRemainSec<mSubmitVerCodeTime) and (mIsSubmitVerifiCode=false)then //å¼€å§‹æäº¤éªŒè¯ç ï¼š
   begin
     mIsSubmitVerifiCode:=true;
-    //4.µã»÷Ìá½»
+    //4.ç‚¹å‡»æäº¤
     getCursorPos(pos);
     mouseClick(pos);
     sleep(10);
@@ -393,70 +393,71 @@ begin
   end;
 end;
 {-------------------------------------------------------------------------
- È«×Ô¶¯ÇÀÅÄ²ßÂÔ1£º
+ å…¨è‡ªåŠ¨æŠ¢æ‹ç­–ç•¥1ï¼š
 }
 procedure TfWeb.AutoPriceStrategy();
 const
-  REMAIN_SEC_SUBMIT_PRICE:integer=15;//³ö¼ÛÊ±¼äµã
-  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//Ìá½»ÑéÖ¤ÂëÊ±¼äµã
+  REMAIN_SEC_SUBMIT_PRICE:integer=15;//å‡ºä»·æ—¶é—´ç‚¹
+  REMAIN_SEC_SUBMIT_VERCODE:integer=5;//æäº¤éªŒè¯ç æ—¶é—´ç‚¹
 var
   pos:tPoint;
 begin
-  if(mIsAddPrice=false)then begin //1.ÊäÈë¼Ó¼ÛÖµ
+  if(mIsAddPrice=false)then begin //1.è¾“å…¥åŠ ä»·å€¼
      mIsAddPrice:=true;
      mouseClick(rctInputAddPrice.CenterPoint);
      inputstring(inttostr(mAddPrice));
   end;
-  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //¿ªÊ¼Ìá½»¼Û¸ñ£º
+  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //å¼€å§‹æäº¤ä»·æ ¼ï¼š
   begin
     mIsSubmitPrice:=true;
-    //1.µã»÷¼Ó¼Û°´Å¥£»
+    //1.ç‚¹å‡»åŠ ä»·æŒ‰é’®ï¼›
     mouseClick(rctSubmitAddPrice.CenterPoint);
     sleep(10);
-    //2.µã»÷Ìá½»
+    //2.ç‚¹å‡»æäº¤
     mouseClick(rctSubmitPrice.CenterPoint);
     sleep(1000);
-    //3.µã»÷ÊäÈëÑéÖ¤ÂëÎÄ±¾¿ò£º
+    //3.ç‚¹å‡»è¾“å…¥éªŒè¯ç æ–‡æœ¬æ¡†ï¼š
     mouseClick(rctInputVerificationCode.CenterPoint);
-    //4.ÊäÈëÑéÖ¤Âë(ÎÄ±¾¿ò)£º
+    //4.è¾“å…¥éªŒè¯ç (æ–‡æœ¬æ¡†)ï¼š
     inputstring(mVerCode);
-    //5.µã»÷Ìá½»ÑéÖ¤Âë°´Å¥:
+    //5.ç‚¹å‡»æäº¤éªŒè¯ç æŒ‰é’®:
     mouseClick(rctSubmitVerificationCode.CenterPoint);
   end;
 
 end;
 
 {-------------------------------------------------------------------------
- ¼Ó¼Û+×Ô¶¯ÇÀÅÄ²ßÂÔ1£º
+ åŠ ä»·+è‡ªåŠ¨æŠ¢æ‹ç­–ç•¥1ï¼š
 }
 procedure TfWeb.PriceStrategy();
 var
   pos:tPoint;
 begin
-  if(mIsAddPrice=false)then begin //1.ÊäÈë¼Ó¼ÛÖµ
+  if(mIsAddPrice=false)then begin //1.è¾“å…¥åŠ ä»·å€¼
      mIsAddPrice:=true;
      mouseClick(rctInputAddPrice.CenterPoint);
      inputstring(inttostr(mAddPrice));
   end;
-  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //¿ªÊ¼Ìá½»¼Û¸ñ£º
+  if(mRemainSec<mRequestVerCodeTime) and (mIsSubmitPrice=false)then //å¼€å§‹æäº¤ä»·æ ¼ï¼š
   begin
     mIsSubmitPrice:=true;
-    //1.µã»÷¼Ó¼Û°´Å¥£»
+    //1.ç‚¹å‡»åŠ ä»·æŒ‰é’®ï¼›
     mouseClick(rctSubmitAddPrice.CenterPoint);
     sleep(10);
-    //2.µã»÷Ìá½»
+    //2.ç‚¹å‡»æäº¤
     mouseClick(rctSubmitPrice.CenterPoint);
-    sleep(1000);
-    //3.µã»÷ÊäÈëÑéÖ¤ÂëÎÄ±¾¿ò£º
-    mouseClick(rctInputVerificationCode.CenterPoint);
-    //4.Èç¹ûÑéÖ¤Âë²»Îª¿Õ£¬ÔòÊäÈëÑéÖ¤Âë£»
-    if(fmain.chkVerCode.Checked) then fweb.mVerCode:=trim(fmain.edtVerCode.Text) else fweb.mVerCode:='';
-    if(mVerCode<>'')then inputstring(mVerCode);
+    //sleep(1000);
+
   end;
-  if(mRemainSec<mSubmitVerCodeTime) and (mIsSubmitVerifiCode=false)then //¿ªÊ¼Ìá½»ÑéÖ¤Âë£º
+  if(mRemainSec<mSubmitVerCodeTime) and (mIsSubmitVerifiCode=false)then //å¼€å§‹æäº¤éªŒè¯ç ï¼š
   begin
     mIsSubmitVerifiCode:=true;
-    //5.µã»÷Ìá½»
+    //3.ç‚¹å‡»è¾“å…¥éªŒè¯ç æ–‡æœ¬æ¡†ï¼š
+    mouseClick(rctInputVerificationCode.CenterPoint);
+    //4.å¦‚æœéªŒè¯ç ä¸ä¸ºç©ºï¼Œåˆ™è¾“å…¥éªŒè¯ç ï¼›
+    if(fmain.chkVerCode.Checked) then fweb.mVerCode:=trim(fmain.edtVerCode.Text) else fweb.mVerCode:='';
+    if(mVerCode<>'')then inputstring(mVerCode) else fmain.memInfo.Lines.Add('éªŒè¯ç ä¸ºç©ºï¼');
+    //5.ç‚¹å‡»æäº¤
     getCursorPos(pos);
     mouseClick(pos);
     sleep(10);

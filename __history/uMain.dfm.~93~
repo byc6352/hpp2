@@ -43,11 +43,13 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = tsInfo
+    ActivePage = TabSheet1
     Align = alClient
     TabOrder = 2
     object TabSheet1: TTabSheet
       Caption = #25511#21046#38754#26495
+      ExplicitWidth = 281
+      ExplicitHeight = 165
       object GroupBox1: TGroupBox
         Left = 0
         Top = 0
@@ -56,6 +58,7 @@ object fMain: TfMain
         Align = alTop
         Caption = #22352#26631#21442#25968
         TabOrder = 0
+        ExplicitTop = 8
         object edtForm: TLabeledEdit
           Left = 425
           Top = 31
@@ -428,6 +431,7 @@ object fMain: TfMain
         Align = alTop
         Caption = #33719#21462#22352#26631#21442#25968
         TabOrder = 1
+        ExplicitWidth = 784
         object imgGetParam: TImage
           Left = 127
           Top = 11
@@ -463,6 +467,7 @@ object fMain: TfMain
         Align = alTop
         Caption = #33719#21462#22270#20687#35782#21035'token'
         TabOrder = 2
+        ExplicitWidth = 784
         object btnToken: TButton
           Left = 33
           Top = 27
@@ -488,6 +493,7 @@ object fMain: TfMain
         Align = alTop
         Caption = #25293#29260#31574#30053
         TabOrder = 3
+        ExplicitWidth = 784
         object cmbStrategy: TComboBox
           Left = 6
           Top = 38
@@ -552,6 +558,7 @@ object fMain: TfMain
         Height = 119
         Align = alTop
         TabOrder = 4
+        ExplicitWidth = 784
         object edtVirtualSysAddr: TLabeledEdit
           Left = 2
           Top = 30
@@ -615,14 +622,19 @@ object fMain: TfMain
     object tsInfo: TTabSheet
       Caption = #20449#24687#23637#31034
       ImageIndex = 1
+      ExplicitWidth = 281
+      ExplicitHeight = 165
       object memInfo: TMemo
         Left = 0
         Top = 0
         Width = 776
         Height = 715
         Align = alClient
-        ScrollBars = ssBoth
         TabOrder = 0
+        ExplicitLeft = 296
+        ExplicitTop = 312
+        ExplicitWidth = 185
+        ExplicitHeight = 89
       end
     end
   end

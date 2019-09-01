@@ -10,12 +10,10 @@ const
   BAIDU_APP_ID:string='16197183';
   BAIDU_API_KEY:string='5G4tOXwCGG5buEFPrZGGykal';
   BAIDU_SECRET_KEY:string='ceAs9I9xHUzrxs0OWfEBed2HnA4CerLS';
-  VER_G:string='vg.dat';
-  VER_M:string='vm.dat';
 var
   workdir:string;//工作目录
   webdir:string;// 保存网页的子目录
-  configFile,configFile2,verg,verm:string;//xml配置参数文件
+  configFile,configFile2:string;//xml配置参数文件
   procedure init();
 implementation
 uses
@@ -31,8 +29,6 @@ begin
       ForceDirectories(webdir);
     configFile:=workdir+'\'+XML_FILE;
     configFile2:=workdir+'\'+XML_FILE_G;
-    verg:=workdir+'\'+VER_G;
-    verm:=workdir+'\'+VER_M;
     if(not fileexists(configFile))then
       uxml.createXml;
 end;
