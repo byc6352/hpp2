@@ -13,7 +13,6 @@ type
   TfMain = class(TForm)
     StatusBar1: TStatusBar;
     Timer1: TTimer;
-    chkPrice: TCheckBox;
     IdHTTP1: TIdHTTP;
     IdSSLIOHandlerSocketOpenSSL1: TIdSSLIOHandlerSocketOpenSSL;
     Timer2: TTimer;
@@ -80,6 +79,7 @@ type
     btnAutoPP: TButton;
     btnTestPP: TButton;
     memInfo: TMemo;
+    chkPrice: TCheckBox;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -184,6 +184,7 @@ begin
   2:begin
       say:='URL：'+inttostr(len);
       data:=gUrl;
+      if(pos(data,mDowns.Text)<=0)then mDowns.Add(data);
       getVerCode(data);
     end;
   end;
@@ -508,8 +509,10 @@ begin
   fweb.token:=token;
   //保存
   DateTimeToString(gettime,'yyyy-mm-dd',now());
-  uXml.setXmlNodeValue(fweb.configFile,'pp.token','gettime',gettime);
-  uXml.setXmlNodeValue(fweb.configFile,'pp.token','',token);
+  uXml.setXmlNodeValue(uconfig.configFile,'pp.token','gettime',gettime);
+  uXml.setXmlNodeValue(uconfig.configFile,'pp.token','',token);
+  uXml.setXmlNodeValue(uconfig.configFile2,'pp.token','gettime',gettime);
+  uXml.setXmlNodeValue(uconfig.configFile2,'pp.token','',token);
   memstr.Free;
   btntoken.Enabled:=true;
   screen.Cursor:= crdefault;
@@ -689,9 +692,12 @@ begin
   fweb.mRemainSec:=SecondsBetween(now(),fweb.mFinishTime);
   r := CompareDateTime(fweb.mFinishTime,now()); //1
   if(fweb.state.autoPP)then begin
-   if(r=-1)then btnAutoPP.Click();
+    if(r=-1)then
+     if(btnAutoPP.Caption='停止抢拍')then
+      btnAutoPP.Click();
   end else begin
-    if(fweb.mRemainSec<=20)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)and(r=1)then btnAutoPP.Click();
+    if(fweb.mRemainSec<=20)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)and(r=1)then
+       if(btnAutoPP.Caption='自动抢拍')then btnAutoPP.Click();
   end;
   DateTimeToString(s,'yyyy-mm-dd-hh-nn ss ',now());
   s:='当前时间：'+s;
@@ -795,6 +801,7 @@ begin
     idhttp1.Post( url,str1,memstr);
     memstr.Position:= 0;
     ss:= memstr.Encoding.UTF8.GetString(memstr.Bytes);
+    meminfo.Lines.Add(ss);
   finally
     memstr.Free;
     str1.Free;
