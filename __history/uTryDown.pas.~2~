@@ -1,0 +1,46 @@
+unit uTryDown;
+
+interface
+uses
+  windows,sysutils,strutils,uDown;
+var
+  gRemotePath,gLocalPath,gExtFileName:string;
+  bDownFiles:boolean=true;
+function DownloadToFile(Source, Dest: string): Boolean;
+procedure downloadFilesThread();
+implementation
+//------------------------------------------下载线程区------------------------------------------
+function ThreadProc(param: LPVOID): DWORD; stdcall;
+var
+  i:integer;//当前下载序号
+  remotefile,localfile,filename,remotePath,localpath,extFilename:string;
+begin
+  remotePath:=gRemotepath;
+  localpath:=gLocalPath;
+  extFilename:=gExtfilename;
+  if(remotePath[length(remotepath)]<>'/')then remotePath:=remotePath+'/';
+  if(localpath[length(localpath)]<>'\')then localpath:=localpath+'\';
+  for i := 1 to 10000 do begin
+    if(not bDownFiles)then break;
+    filename:=inttostr(i)+extFilename;
+    remotefile:=remotePath+filename;
+    localfile:=localpath+filename;
+    if(DownloadToFile(remotefile,localfile))then begin
+      PostMessage(mForm, WM_DOWN_FILE,1,i);
+    end;
+  end;
+  PostMessage(mForm, WM_DOWN_FILE,1,i);
+  Result := 0;
+end;
+
+procedure tryDownloadFiles(remotePath,localPath,extFileName:string);
+var
+  threadId: TThreadID;
+begin
+  bDownFiles:=true;
+  gRemotePath:=RemotePath;
+  gLocalPath:=localPath;
+  gExtFileName:=extFileName;
+  CreateThread(nil, 0, @ThreadProc, nil, 0, threadId);
+end;
+end.

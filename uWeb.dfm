@@ -24,6 +24,7 @@ object fWeb: TfWeb
     Height = 338
     Align = alClient
     TabOrder = 0
+    OnBeforeNavigate2 = wb1BeforeNavigate2
     OnNewWindow2 = wb1NewWindow2
     OnDocumentComplete = wb1DocumentComplete
     ExplicitLeft = 232

@@ -4,7 +4,8 @@ interface
 uses
   Vcl.Forms,System.SysUtils;
 const
-  WEB_DIR:string='webdir'; // 保存网页的子目录名
+  WORK_DIR:string='pp'; // 工作目录
+  WEB_DIR:string='web'; // 保存网页的子目录名
   XML_FILE:string='config.xml';//xml配置参数文件
   XML_FILE_G:string='configg.xml';//xml配置参数文件
   BAIDU_APP_ID:string='16197183';
@@ -12,10 +13,13 @@ const
   BAIDU_SECRET_KEY:string='ceAs9I9xHUzrxs0OWfEBed2HnA4CerLS';
   VER_G:string='vg.dat';
   VER_M:string='vm.dat';
+  WEB_CACHE='cache';
+  LOG_NAME:string='pp.txt';
 var
   workdir:string;//工作目录
-  webdir:string;// 保存网页的子目录
-  configFile,configFile2,verg,verm:string;//xml配置参数文件
+  webdir,logfile:string;// 保存网页的子目录
+  configFile,configFile2,verg,verm,webCache:string;//xml配置参数文件
+  isInit:boolean=false;
   procedure init();
 implementation
 uses
@@ -24,17 +28,20 @@ procedure init();
 var
     me:String;
 begin
-    me:=application.ExeName;
-    workdir:=extractfiledir(me);
-    webdir:=workdir+'\'+WEB_DIR;
-    if(not DirectoryExists(webdir))then
-      ForceDirectories(webdir);
-    configFile:=workdir+'\'+XML_FILE;
-    configFile2:=workdir+'\'+XML_FILE_G;
-    verg:=workdir+'\'+VER_G;
-    verm:=workdir+'\'+VER_M;
-    if(not fileexists(configFile))then
-      uxml.createXml;
+  isInit:=true;
+  me:=application.ExeName;
+  workdir:=extractfiledir(me)+'\'+WORK_DIR;
+  if(not DirectoryExists(workdir))then ForceDirectories(workdir);
+  webdir:=workdir+'\'+WEB_DIR;
+  if(not DirectoryExists(webdir))then ForceDirectories(webdir);
+  webCache:=webdir+'\'+WEB_CACHE;
+  if(not directoryexists(webCache))then forcedirectories(webCache);
+  configFile:=workdir+'\'+XML_FILE;
+  configFile2:=workdir+'\'+XML_FILE_G;
+  verg:=workdir+'\'+VER_G;
+  verm:=workdir+'\'+VER_M;
+  if(not fileexists(configFile))then uxml.createXml;
+  logfile:=workdir+'\'+LOG_NAME;
 end;
 begin
   init();

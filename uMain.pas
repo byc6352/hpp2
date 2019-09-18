@@ -7,8 +7,8 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,uWeb,strutils, Vcl.ComCtrls,uXml,uconfig,
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
-  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,webhook;
-
+  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,uHookweb,uData,uLog,uTryDown,uDataDown,shellapi;
+   //webhook
 type
   TfMain = class(TForm)
     StatusBar1: TStatusBar;
@@ -80,6 +80,11 @@ type
     btnTestPP: TButton;
     memInfo: TMemo;
     chkPrice: TCheckBox;
+    tsAddFuncs: TTabSheet;
+    edtExtFilename: TLabeledEdit;
+    edtRemotePath: TLabeledEdit;
+    btnDownVerCode: TButton;
+    btnSave: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -113,6 +118,10 @@ type
     procedure btnSaveSubmitAddPriceParamClick(Sender: TObject);
     procedure btnTestSubmitAddPriceParamClick(Sender: TObject);
     procedure cmbStrategyChange(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure btnDownVerCodeClick(Sender: TObject);
+    procedure btnSaveClick(Sender: TObject);
   private
     { Private declarations }
     procedure getParamsToCtl(configFile:string);
@@ -122,7 +131,9 @@ type
     procedure getPrice();
     procedure saveStrategy(configFile:string);
     procedure httpMessage(var MSG:TMessage); message WM_CAP_WORK;
+    procedure downMessage(var MSG:TMessage); message WM_DOWN_FILE;
     procedure getVerCode(url:string);
+    procedure AppException(Sender: TObject; E: Exception);
   public
     { Public declarations }
 
@@ -130,21 +141,23 @@ type
 
 var
   fMain: TfMain;
+  iDown:integer;//下载指针
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
   function initEndTime():string;
-  function ReversePos(SubStr, S: String): Integer;
+
 implementation
 
 {$R *.dfm}
-function ReversePos(SubStr, S: String): Integer;
-var
-  i : Integer;
+
+procedure TfMain.AppException(Sender: TObject; E: Exception);
 begin
-  i := Pos(ReverseString(SubStr), ReverseString(S));
-  if i > 0 then i := Length(S) - i - Length(SubStr) + 2;
-  Result := i;
+  //Application.ShowException(E);
+  //Application.Terminate;
+  Log(e.Message);
 end;
+
+
 procedure TfMain.getVerCode(url:string);
 var
   filename,vercode:string;
@@ -163,6 +176,19 @@ begin
     end;
   end;
 end;
+procedure TfMain.downMessage(var msg:TMessage);
+var
+  i,j:integer;
+begin
+  i:=msg.LParam;
+  j:=msg.WParam;
+  case j of
+  0:meminfo.Lines.Add('down fal：'+inttostr(i)+'['+datas[i].ObjectName+']');
+  1:meminfo.Lines.Add('down suc：'+inttostr(i)+'['+datas[i].ObjectName+']');
+  2:meminfo.Lines.Add('down suc：'+inttostr(i));
+  3:meminfo.Lines.Add('down end：'+inttostr(i));
+  end;
+end;
 procedure TfMain.httpMessage(var msg:TMessage);
 var
   len,flag:integer;
@@ -175,23 +201,22 @@ begin
   case flag of
   0:begin
       say:='发送数据：'+inttostr(len);
-      data:=gSend;
+      //data:=gSend;
     end;
   1:begin
       say:='接收数据：'+inttostr(len);
-      data:=gRecv;
+      //data:=gRecv;
     end;
   2:begin
-      say:='URL：'+inttostr(len);
-      data:=gUrl;
-      if(pos(data,mDowns.Text)<=0)then mDowns.Add(data);
-      getVerCode(data);
+      say:='URL：';
+      data:=uData.datas[idata-1].ObjectName;
+      //addDown();
+      if(fweb.state.VirtualSys)then getVerCode(data);
     end;
   end;
   memInfo.Lines.Add(say);
-  if(length(data)<500)then
-    memInfo.Lines.Add(data);
-  statusbar1.Panels[0].Text:=say;
+  memInfo.Lines.Add(data);
+  //statusbar1.Panels[0].Text:=data;
 end;
 function initEndTime():string;
 //const
@@ -286,6 +311,18 @@ begin
   end;
 end;
 
+procedure TfMain.btnDownVerCodeClick(Sender: TObject);
+var
+  remoteName,ExtFileName:string;
+begin
+  remoteName:=trim(edtRemotePath.Text);
+  ExtFileName:=trim(edtExtFileName.text);
+  if(remoteName[length(remoteName)]<>'/')then
+    uTryDown.tryDownloadFiles(remoteName)
+  else
+    uTryDown.tryDownloadFiles(remoteName,ExtFileName);
+end;
+
 procedure TfMain.btnFormSaveClick(Sender: TObject);
 begin
   uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.form','',trim(edtForm.text));
@@ -312,7 +349,7 @@ begin
   //fWeb.wb1.Navigate('https://paimai.alltobid.com'); //https://paimai.alltobid.com
   //fWeb.wb1.Navigate('https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc48/login.htm');
   //https://paimai2.alltobid.com/bid/b901b3c0ba414c3bb7c08761aedbff50/login.htm
-  webhook.HookWebAPI;
+  //webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.GPaddr);
   //状态显示：
   fweb.state.enterSys:=true;
@@ -332,6 +369,15 @@ end;
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
 begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
+end;
+
+procedure TfMain.btnSaveClick(Sender: TObject);
+var
+  txt:string;
+begin
+  txt:=uData.saveData;
+  if txt<>'' then
+  ShellExecute(Handle,'open','notepad.exe',pchar(txt),nil,1);
 end;
 
 procedure TfMain.btnSaveInputAddPriceParamClick(Sender: TObject);
@@ -527,6 +573,7 @@ procedure TfMain.btnUpdateFinishTimeClick(Sender: TObject);
 begin
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
   //fweb.mFinishTime:=VarToDateTime(trim(edtFinishTime.Text));
+
   showmessage('更新成功！');
 end;
 
@@ -562,7 +609,7 @@ begin
   setParamsToWeb();
   fWeb.Show;
   //fWeb.wb1.Navigate('http://test.alltobid.com/moni/gerenbid.html');
-  webhook.HookWebAPI;
+  //webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.virtalAddr);
   //状态显示：
   fweb.state.enterSys:=true;
@@ -661,6 +708,21 @@ begin
 
   edtToken.Text:=uXml.GetXMLNodeValue(configFile,'pp.token') ;
 end;
+procedure TfMain.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  //uDown.stop;
+  uDataDown.stop;
+  saveData();
+end;
+
+procedure TfMain.FormCreate(Sender: TObject);
+begin
+  SetMyGlobalEnvironment();
+  Application.OnException := AppException;
+  //Set8087CW(Longword($133f));
+  IEEmulator(11001);
+end;
+
 procedure TfMain.FormShow(Sender: TObject);
 begin
   fMain.Top:=0;
@@ -671,7 +733,7 @@ begin
   cmbStrategy.OnChange(sender);
   edtFinishTime.Text:=initendTime();
   setParamstoWeb();
-  self.Caption:=fweb.appName+'v'+fweb.appVersion+'联系QQ1409232611';
+  self.Caption:=fweb.appName+'v'+fweb.appVersion+'联系QQ1409232611微信：byc6352';
   statusbar1.Panels[2].Text:='当前屏幕分辨率：'+inttostr(screen.Width)+','+inttostr(screen.Height);
   //状态显示：
   fweb.state.enterSys:=false;
@@ -681,7 +743,13 @@ begin
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
   IdSNTP1.Host:='time.windows.com';
   IdSNTP1.SyncTime ;
-  webhook.hform:=fmain.Handle;
+
+  TWinControl(fweb.Wb2).Visible:=False;
+
+  uHookweb.hform:=fmain.Handle;
+  uHookweb.bHook:=true;
+  //uDown.start(uConfig.webCache,fmain.Handle);
+  uDataDown.start(uConfig.webCache,fmain.Handle);
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);
@@ -852,4 +920,51 @@ begin
   end;
   result:=bmp;
 end;
+
+
+{
+  function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//组合url
+  procedure addDown();
+
+ procedure addDown();
+var
+  url,ServerName,ObjectName:string;
+  ServerPort:DWORD;
+begin
+  while iDown<uData.iData do
+  begin
+    ServerName:=uData.datas[iDown].ServerName;
+    ObjectName:=uData.datas[iDown].ObjectName;
+    ServerPort:=uData.datas[iDown].ServerPort;
+    url:=MergeUrl(ServerName,ObjectName,ServerPort);
+    iDown:=iDown+1;
+    if(url='')then continue;
+    uDown.addUrl(url);
+  end;
+
+end;
+function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//组合url
+var
+  protocol:string;
+begin
+  result:='';
+  if(servername='')or(serverport=0)then exit;
+  if(ObjectName[1]<>'/')then exit;
+  protocol:='http';
+  //if(ObjectName2[1]<>'/')then ObjectName2:='/'+ObjectName;
+  case ServerPort of
+  80:begin
+    result:=protocol+'://'+ServerName+ObjectName;
+  end;
+  443:begin
+    protocol:='https';
+    result:=protocol+'://'+ServerName+ObjectName;
+  end;
+  else begin
+    result:=protocol+'://'+ServerName+':'+inttostr(ServerPort)+ObjectName;
+  end;
+  end;
+end;
+
+}
 end.

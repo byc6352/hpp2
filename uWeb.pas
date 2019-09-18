@@ -28,6 +28,9 @@ type
       var Cancel: WordBool);
     procedure wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
       var Cancel: WordBool);
+    procedure wb1BeforeNavigate2(ASender: TObject; const pDisp: IDispatch;
+      const URL, Flags, TargetFrameName, PostData, Headers: OleVariant;
+      var Cancel: WordBool);
   private
     { Private declarations }
     mIsRct:boolean;
@@ -76,17 +79,10 @@ type
 
 var
   fWeb: TfWeb;
-  bDownFiles:boolean;//下载工作线程变量；
-  mDowns:tstrings;
-  mPage,mSite,mProtocol:string;//主页URL ，站点URL, 协议(http://,https://),工作目录
-function DownloadToFile(Source, Dest: string): Boolean; //uses urlmon;
-procedure downloadfile(url:string); //下载指定链接的文件
-function url2file(url:string):string;//链接转换为本地文件路径
-function getSite(url:string):string;//获取主站地址；
-procedure downloadFilesThread();//下载子线程；
+
 implementation
 uses
-  uMain;
+  uMain,uHookweb,uDown;
 {$R *.dfm}
 procedure TfWeb.SaveScreen();
 var
@@ -145,7 +141,7 @@ begin
   fWeb.top:=Round(Screen.height/8);
   fWeb.width:=Round(Screen.width/2);
   fWeb.height:=Round(Screen.Height/4*3);
-  if not assigned(mDowns) then mDowns:=tstringlist.Create;
+  //if not assigned(mDowns) then mDowns:=tstringlist.Create;
 
 end;
 
@@ -167,6 +163,15 @@ begin
   fweb.Canvas.Pen.Mode:=pmcopy;
 end;
 
+procedure TfWeb.wb1BeforeNavigate2(ASender: TObject; const pDisp: IDispatch;
+  const URL, Flags, TargetFrameName, PostData, Headers: OleVariant;
+  var Cancel: WordBool);
+begin
+  uHookweb.state:=STAT_BROWSING;
+  //uDown.pause;
+  //bar1.Panels[0].Text:='正在加载页面...';
+end;
+
 procedure TfWeb.wb1DocumentComplete(ASender: TObject; const pDisp: IDispatch;
   const URL: OleVariant);
 var
@@ -178,7 +183,14 @@ var
   tmpY : integer;
 begin
   if not Assigned(wb1.Document) then Exit;
-  doc:=wb1.Document as IHTMLDocument2;
+  if(Wb1.ReadyState<>READYSTATE_COMPLETE)then exit;
+  if(uHookweb.state=STAT_IDLE)then exit;
+  uHookweb.state:=STAT_IDLE;
+
+  fWeb.width:=wb1.width;
+  fWeb.height:=wb1.Height;
+  //uDown.start();
+  //doc:=wb1.Document as IHTMLDocument2;
   {
   ms := TMemoryStream.Create;
   (wb1.Document as IPersistStreamInit).Save(TStreamAdapter.Create(ms), True);
@@ -202,14 +214,13 @@ begin
     //Width := tmpY;
   end;
   }
-  fWeb.width:=wb1.width;
-  fWeb.height:=wb1.Height;
-  mPage:=doc.url;
-  mSite:=doc.domain;
-  mProtocol:=doc.protocol;
-  if(mProtocol='HyperText Transfer Protocol with Privacy')then mProtocol:='https://' else mProtocol:='http://';
-  if(pos(mPage,mDowns.Text)<=0)then mDowns.Add(mPage);
-  downloadFilesThread();
+
+  //mPage:=doc.url;
+  //mSite:=doc.domain;
+  //mProtocol:=doc.protocol;
+  //if(mProtocol='HyperText Transfer Protocol with Privacy')then mProtocol:='https://' else mProtocol:='http://';
+  //if(pos(mPage,mDowns.Text)<=0)then mDowns.Add(mPage);
+  //downloadFilesThread();
 end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
   var Cancel: WordBool);
@@ -278,99 +289,7 @@ begin { GenerateJPEGfromBrowser }
     // error handler code
   end; { try }
 end; { GenerateJPEGfromBrowser }
-//------------------------------------------下载线程区------------------------------------------
-function ThreadProc(param: LPVOID): DWORD; stdcall;
-var
-  i,k:integer;//当前下载序号
-  url:string;
-begin
-  i:=0;
-  k:=0;
-  while bDownFiles do begin
-    if(i>=mDowns.Count)then begin sleep(1000);continue;end;
-    url:=mDowns[i];
-    //PostMessage(fMain.Handle, WM_DOWN_WORK,0,i);
-    downloadfile(url);
-    i:=i+1;
-  end;
-  //PostMessage(fMain.Handle, WM_DOWN_WORK,1,i);
-  Result := 0;
-end;
 
-procedure downloadFilesThread();
-var
-  threadId: TThreadID;
-begin
-  if(bDownFiles)then exit;
-  bDownFiles:=true;
-  CreateThread(nil, 0, @ThreadProc, nil, 0, threadId);
-end;
-
-//------------------------------------------公共函数区----------------------------------------------
-//uses urlmon;
-function DownloadToFile(Source, Dest: string): Boolean;
-begin
-  try
-    Result := UrlDownloadToFile(nil, PChar(source), PChar(Dest), 0, nil) = 0;
-  except
-    Result := False;
-  end;
-end;
-//下载指定链接的文件
-procedure downloadfile(url:string);
-var
-  localpath,remotepath:string;
-begin
-  remotepath:=url;
-  if pos('/',remotepath)=1 then remotepath:=mProtocol+msite+remotepath;
-  localpath:=url2file(remotepath);
-  if(fileexists(localpath))then exit;
-  DownloadToFile(remotepath,localpath);
-end;
-//链接转换为本地文件路径
-function url2file(url:string):string;
-var
-  p,i:integer;
-  s,dir,fullDir:string; //forcedirectories(mWorkDir);
-begin
-  s:=url;
-  p:=pos('/',s);
-  dir:=leftstr(s,p-1);
-  if(dir='http:')then s:=rightstr(s,length(s)-7);  //去除http头部
-  if(dir='https:')then s:=rightstr(s,length(s)-8);  //去除https头部
-  p:=pos('/',s);
-  dir:=leftstr(s,p-1);
-  if(dir<>msite)then s:=msite+s;  //添加主站地址
-  fullDir:=uconfig.webdir;  //程序工作目录；
-  p:=pos('/',s);
-  while p>0 do begin
-    dir:=leftstr(s,p-1);
-    fullDir:=fullDir+'\'+dir;
-    if(not directoryexists(fullDir))then forcedirectories(fullDir);  //创建本地文件目录
-    s:=rightstr(s,length(s)-length(dir)-1);
-    p:=pos('/',s);
-  end;
-  p:=pos('?',s);  //排除链接里面?后面的内容；
-  if(p>0)then s:=leftstr(s,p-1);
-  result:=fullDir+'\'+s;
-end;
-//获取主站地址；
-function getSite(url:string):string;
-var
-  dir,s:string;
-  p:integer;
-begin
-  s:=url;
-  p:=pos('/',s);
-  if(p<=0)then begin result:=url;exit;end;
-  dir:=leftstr(s,p-1);
-  if(dir='http:')then s:=rightstr(s,length(s)-7);
-  if(dir='https:')then s:=rightstr(s,length(s)-8);
-  p:=pos('/',s);
-  if(p<=0)then begin result:=url;exit;end;
-  s:=leftstr(s,p-1);
-  result:=s;
-end;
 //**********************************抢拍策略**************************************************
 procedure TfWeb.Initstrategy1();
 begin
@@ -578,6 +497,118 @@ begin
   end;
 
   end;
+
+{
+  bDownFiles:boolean;//下载工作线程变量；
+  mDowns:tstrings;
+  mPage,mSite,mProtocol:string;//主页URL ，站点URL, 协议(http://,https://),工作目录
+function DownloadToFile(Source, Dest: string): Boolean; //uses urlmon;
+procedure downloadfile(url:string); //下载指定链接的文件
+function url2file(url:string):string;//链接转换为本地文件路径
+function getSite(url:string):string;//获取主站地址；
+procedure downloadFilesThread();//下载子线程；
+
+
+
+
+//------------------------------------------下载线程区------------------------------------------
+function ThreadProc(param: LPVOID): DWORD; stdcall;
+var
+  i,k:integer;//当前下载序号
+  url:string;
+begin
+  i:=0;
+  k:=0;
+  while bDownFiles do begin
+    if(i>=mDowns.Count)then begin sleep(1000);continue;end;
+    url:=mDowns[i];
+    //PostMessage(fMain.Handle, WM_DOWN_WORK,0,i);
+    downloadfile(url);
+    i:=i+1;
+  end;
+  //PostMessage(fMain.Handle, WM_DOWN_WORK,1,i);
+  Result := 0;
+end;
+
+procedure downloadFilesThread();
+var
+  threadId: TThreadID;
+begin
+  if(bDownFiles)then exit;
+  bDownFiles:=true;
+  CreateThread(nil, 0, @ThreadProc, nil, 0, threadId);
+end;
+
+//------------------------------------------公共函数区----------------------------------------------
+//uses urlmon;
+function DownloadToFile(Source, Dest: string): Boolean;
+begin
+  try
+    Result := UrlDownloadToFile(nil, PChar(source), PChar(Dest), 0, nil) = 0;
+  except
+    Result := False;
+  end;
+end;
+//下载指定链接的文件
+procedure downloadfile(url:string);
+var
+  localpath,remotepath:string;
+begin
+  remotepath:=url;
+  if pos('/',remotepath)=1 then remotepath:=mProtocol+msite+remotepath;
+  localpath:=url2file(remotepath);
+  if(fileexists(localpath))then exit;
+  DownloadToFile(remotepath,localpath);
+end;
+//链接转换为本地文件路径
+function url2file(url:string):string;
+var
+  p,i:integer;
+  s,dir,fullDir:string; //forcedirectories(mWorkDir);
+begin
+  s:=url;
+  p:=pos('/',s);
+  dir:=leftstr(s,p-1);
+  if(dir='http:')then s:=rightstr(s,length(s)-7);  //去除http头部
+  if(dir='https:')then s:=rightstr(s,length(s)-8);  //去除https头部
+  p:=pos('/',s);
+  dir:=leftstr(s,p-1);
+  if(dir<>msite)then s:=msite+s;  //添加主站地址
+  fullDir:=uconfig.webdir;  //程序工作目录；
+  p:=pos('/',s);
+  while p>0 do begin
+    dir:=leftstr(s,p-1);
+    fullDir:=fullDir+'\'+dir;
+    if(not directoryexists(fullDir))then forcedirectories(fullDir);  //创建本地文件目录
+    s:=rightstr(s,length(s)-length(dir)-1);
+    p:=pos('/',s);
+  end;
+  p:=pos('?',s);  //排除链接里面?后面的内容；
+  if(p>0)then s:=leftstr(s,p-1);
+  result:=fullDir+'\'+s;
+end;
+//获取主站地址；
+function getSite(url:string):string;
+var
+  dir,s:string;
+  p:integer;
+begin
+  s:=url;
+  p:=pos('/',s);
+  if(p<=0)then begin result:=url;exit;end;
+  dir:=leftstr(s,p-1);
+  if(dir='http:')then s:=rightstr(s,length(s)-7);
+  if(dir='https:')then s:=rightstr(s,length(s)-8);
+  p:=pos('/',s);
+  if(p<=0)then begin result:=url;exit;end;
+  s:=leftstr(s,p-1);
+  result:=s;
+end;
+
+
+
+
+}
 initialization
   OleInitialize(nil);
 finalization

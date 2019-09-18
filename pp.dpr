@@ -7,7 +7,8 @@ uses
   uFuncs in 'uFuncs.pas',
   uConfig in 'uConfig.pas',
   uXml in 'uXml.pas',
-  uAuth in 'uAuth.pas';
+  uAuth in 'uAuth.pas',
+  uTryDown in 'uTryDown.pas';
 
 {$R *.res}
 
