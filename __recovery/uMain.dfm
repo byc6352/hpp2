@@ -692,8 +692,8 @@ object fMain: TfMain
     Request.Ranges.Units = 'bytes'
     Request.Ranges = <>
     HTTPOptions = []
-    Left = 720
-    Top = 409
+    Left = 624
+    Top = 385
   end
   object IdSSLIOHandlerSocketOpenSSL1: TIdSSLIOHandlerSocketOpenSSL
     MaxLineAction = maException
@@ -704,8 +704,8 @@ object fMain: TfMain
     SSLOptions.Mode = sslmUnassigned
     SSLOptions.VerifyMode = []
     SSLOptions.VerifyDepth = 0
-    Left = 712
-    Top = 337
+    Left = 616
+    Top = 321
   end
   object Timer2: TTimer
     Enabled = False
