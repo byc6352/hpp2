@@ -37,7 +37,7 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = TabSheet1
+    ActivePage = tsAddFuncs
     Align = alClient
     TabOrder = 1
     object TabSheet1: TTabSheet

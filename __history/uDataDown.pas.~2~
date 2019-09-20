@@ -26,7 +26,7 @@ procedure start(workdir:string;hForm:HWND);overload;
 procedure clear;
 implementation
 uses
-  uData,uConfig,uFuncs,winInet,uLog;
+  uData,uConfig,uFuncs,winInet;
 var
   mWorkDir:string;
 procedure myCloseFileHandle(var hFile:HWND);
@@ -67,7 +67,6 @@ begin
     uData.datas[idata-1].rData:=localFilename;
     hLocalFile:=CreateFile(pchar(localFileName),GENERIC_WRITE,FILE_SHARE_WRITE,nil,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
     if(hLocalFile = INVALID_HANDLE_VALUE)then exit;
-    Log('httpReadFile:'+localFileName);
   end else begin
     if(hLocalFile=0)then exit;
   end;

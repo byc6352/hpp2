@@ -104,24 +104,13 @@ begin
   result:='';
   if idata=0 then exit;
   ss:=tstringList.Create;
-  for I := 0 to iData-1 do
+  for I := 0 to iData do
   begin
     stime:=ufuncs.getDateTimeString(datas[i].dt,0); //
-    ss.Add(stime+'--------------------Request Object--------------------');
-    ss.Add(datas[i].ObjectName);
-    ss.Add('');
-    ss.Add('');
     ss.Add(stime+'--------------------Request Header--------------------');
     ss.Add(datas[i].qHeader);
     ss.Add(stime+'--------------------Response Header--------------------');
     ss.Add(datas[i].rHeader);
-    ss.Add(stime+'--------------------Response file----------------------');
-    ss.Add(datas[i].rData);
-    ss.Add('');
-    ss.Add('');
-    ss.Add('=================================================================================================');
-    ss.Add('');
-    ss.Add('');
   end;
   result:=getFileName(uConfig.workdir,'header','.txt');
   ss.SaveToFile(result);

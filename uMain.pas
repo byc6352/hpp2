@@ -378,6 +378,9 @@ begin
   txt:=uData.saveData;
   if txt<>'' then
   ShellExecute(Handle,'open','notepad.exe',pchar(txt),nil,1);
+  txt:=uData.saveHeader;
+  if txt<>'' then
+  ShellExecute(Handle,'open','notepad.exe',pchar(txt),nil,1);
 end;
 
 procedure TfMain.btnSaveInputAddPriceParamClick(Sender: TObject);

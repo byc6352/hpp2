@@ -4,8 +4,8 @@ interface
 uses windows,WinSock2,Messages,WININET,uFuncs,uConfig,uData;
 const
   WM_CAP_WORK = WM_USER+1001;
-  STAT_BROWSING=1;
-  STAT_IDLE=0;
+  STAT_BROWSING=0;
+  STAT_IDLE=1;
 
 var
   state:integer; //ä¯ÀÀÆ÷×´Ì¬£ºSTAT_BROWSINGÕýÔÚ¼ÓÔØÒ³Ãæ£»STAT_IDLE¿ÕÏÐ£»
@@ -101,7 +101,7 @@ var
   bHook:boolean;
 implementation
 uses
-  HookUtils,uDataDown,uLog;
+  HookUtils,uDataDown;
   //InternetCloseHandle
 function replaced_InternetCloseHandle(hInet: HINTERNET): BOOL; stdcall;
 begin
@@ -139,7 +139,6 @@ begin
     zeromemory(@buf[0],10*1024);
     if(original_HttpQueryInfoW(hRequest,HTTP_QUERY_FLAG_REQUEST_HEADERS or HTTP_QUERY_RAW_HEADERS_CRLF,@buf[0],tmp,lpdwReserved))then begin
       qHeader:=buf;
-      //uLog.Log(qHeader);
       //sendMessage(hform, WM_CAP_WORK,IDX_HttpQueryInfoW,1);
     end else qHeader:='';
     tmp:=1024*10;
