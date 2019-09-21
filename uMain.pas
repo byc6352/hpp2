@@ -715,7 +715,7 @@ procedure TfMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   //uDown.stop;
   uDataDown.stop;
-  saveData();
+  btnSaveClick(sender);
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);
