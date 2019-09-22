@@ -180,20 +180,21 @@ uses
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
+  myJson:TMyJson;
   jsonObject,jsonObject2: TJSONObject;
   pOut:pOutData;
   jsonData:ansiString;
+  myJson:TmyJson;
 begin
 try
   DataFlag:=TdataFlag(msg.WParam);
   pOut:=POutData(msg.lParam);
-  if(pOut=nil)and(DataFlag<>fHostInfo)then exit;
+  if(pOut=nil)then exit;
   case DataFlag of
   fHostInfo:
     begin
       edtHostIP.Text:=mHookSocketProcessor.DataPackage.host.ip;
       edtHostPort.Text:=inttostr(mHookSocketProcessor.DataPackage.host.port);
-      exit;
     end;//fHostInfo
   fOnlineRequest:
     begin
@@ -209,9 +210,12 @@ try
     end;
   fTimePrice:
     begin
-      edtCurPrice.Text:=mHookSocketProcessor.DataPackage.basePrice;
-      if(edtCurPrice.Text<>'')then
-        fWeb.mPrice:=strtoint( edtCurPrice.Text);
+      //memInfo.Lines.Add('-----TimePrice-----');
+      //memInfo.Lines.Add(DataPackage.cryptedData);
+      //memInfo.Lines.Add(DataPackage.jsonData);
+      myJson:=TmyJson.Create(DataPackage.jsonData);
+      edtCurPrice.Text:=myjson.getValue(11);
+      fWeb.mPrice:=strtoint( edtCurPrice.Text);
     end;
   fYzCodeRequest:
     begin
@@ -243,8 +247,8 @@ try
   fSubmitYzCode:
     begin
       memInfo.Lines.Add('-----fSubmitYzCode-----');
-      memInfo.Lines.Add(pOut^.cryptedData);
-      memInfo.Lines.Add(pOut^.jsonData);
+      memInfo.Lines.Add(DataPackage.cryptedData);
+      memInfo.Lines.Add(DataPackage.jsonData);
     end;
   end;
 finally
@@ -972,7 +976,6 @@ begin
   btnSaveClick(sender);
   //IdSNTP1.Host:='time.windows.com';
   //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.Suspend();
   mHookSocketProcessor.free;
 end;
 

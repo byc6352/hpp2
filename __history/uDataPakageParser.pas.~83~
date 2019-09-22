@@ -60,7 +60,7 @@ type
     mMergeWorkingFlag:TMergeWorkingFlag;                                     //组合包处理结果；
     mMergeStateFlag:TMergeStateFlag;                                 //组合包状态；
     mFlash:tFlash;
-    mPriceData,mPriceCode,mbasePrice:ansiString;                                           //价格数据；
+    mPriceData,mPriceCode:ansiString;                                           //价格数据；
     //-------------------------------------属性--------------------------------------------
     mDataFlag:TDataFlag;                                     //数据类型
     mCryptedData:ansiString;                               //加密的数据；
@@ -83,7 +83,6 @@ type
     function isMyHost(ip:ansiString;port:word):boolean; //判断是否是pp服务器数据包
     //procedure setHostInfo(ip:ansiString;port:word);
     procedure getPriceCode(jsonData:ansiString);
-    procedure getCurPrice(jsonData:ansiString;var curPrice:ansiString);
     //--------------------------------------------------------------------------------------
     procedure setHostInfo(Host:stHostInfo);
     procedure setReplacePriceFlag(ReplacePriceFlag:TReplacePriceFlag);
@@ -94,7 +93,7 @@ type
     procedure Execute; override;
   public
     constructor Create(hForm:HWND); overload;
-    destructor Destroy;override;
+    destructor Destroy;
 
     procedure MergePackage(socketHeader:stSocketHeader;pData:pointer);        //组合包
     procedure ReplacePrice(var Buf; len:Integer);
@@ -111,12 +110,11 @@ type
     property ClientId:ansiString read mClientId write setClientId;
     property hForm:HWND read mhForm write SetFormHandle;                                  // write setHostInfo
     property PriceCode:ansiString read mPriceCode write SetPriceCode;
-    property basePrice:ansiString read mbasePrice;
   end;
 
 implementation
 uses
-  uHookSocketProcessor,uConfig,uFuncs,uLog,json,uMyjoson;
+  uHookSocketProcessor,uConfig,uFuncs,uLog,json;
 
 constructor TDataPackageParser.Create(hForm:HWND);
 begin
@@ -313,7 +311,7 @@ end;
 procedure TDataPackageParser.ParsePackage(i:integer);
 var
   pHeader:PPackageHeader;
-  //cryptedData,jsonData:ansiString;
+  cryptedData,jsonData:ansiString;
   pData:pointer;
   dataSize:DWORD;
   pOut:PoutData;
@@ -330,14 +328,11 @@ try
   if(pHeader^.ordHigh=3) and (pHeader^.ordLow=1)then                //实时价格
   begin
     mDataFlag:=fTimePrice;
-    setLength(mcryptedData,pHeader^.dwDataSize);
+    setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     mPriceData:=cryptedData;
     mjsonData:=mflash.decryptTimeData(cryptedData);
     mcryptedData:=cryptedData;
-    Log('ParsePackage:mPriceData:'+mPriceData);
-    Log('ParsePackage:cryptedData:'+cryptedData);
-    getCurPrice(mjsonData,mBasePrice);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码
   begin
@@ -360,9 +355,9 @@ try
   begin
     if(mDataFlag<>fTimePrice)then
     begin
-      setLength(mcryptedData,pHeader^.dwDataSize);
-      copymemory(@mcryptedData[1],pData,pHeader^.dwDataSize);
-      mjsonData:=mflash.decryptData(cryptedData);
+      setLength(cryptedData,pHeader^.dwDataSize);
+      copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
+      jsonData:=mflash.decryptData(cryptedData);
     end;
     pOut:=new(PoutData);
     zeromemory(pOut,sizeof(stOutData));
@@ -395,14 +390,6 @@ finally
 end;
 end;
 //-----------------------------------------内部功能---------------------------------------------
-procedure TDataPackageParser.getCurPrice(jsonData:ansiString;var curPrice:ansiString);
-var
-  myJson:TMyJson;
-begin
-  myJson:=TmyJson.Create(jsonData);
-  curPrice:=myjson.getValue(11);
-  myJson.Free;
-end;
 procedure TDataPackageParser.getPriceCode(jsonData:ansiString);
 var
   jsonObject,jsonObject2: TJSONObject;

@@ -115,7 +115,7 @@ var
   pb:PByte;
 
 begin
-  THookSocketProcessor.getInstance().DataPackage.ReplacePrice(Buf,len);
+
   result:=original_Send(s,buf,len,flags);
   if(result<1)then exit;
   THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_SEND);

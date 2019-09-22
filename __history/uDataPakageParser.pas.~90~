@@ -94,7 +94,7 @@ type
     procedure Execute; override;
   public
     constructor Create(hForm:HWND); overload;
-    destructor Destroy;override;
+    destructor Destroy;
 
     procedure MergePackage(socketHeader:stSocketHeader;pData:pointer);        //组合包
     procedure ReplacePrice(var Buf; len:Integer);
@@ -335,8 +335,6 @@ try
     mPriceData:=cryptedData;
     mjsonData:=mflash.decryptTimeData(cryptedData);
     mcryptedData:=cryptedData;
-    Log('ParsePackage:mPriceData:'+mPriceData);
-    Log('ParsePackage:cryptedData:'+cryptedData);
     getCurPrice(mjsonData,mBasePrice);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码

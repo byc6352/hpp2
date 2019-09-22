@@ -972,7 +972,6 @@ begin
   btnSaveClick(sender);
   //IdSNTP1.Host:='time.windows.com';
   //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.Suspend();
   mHookSocketProcessor.free;
 end;
 

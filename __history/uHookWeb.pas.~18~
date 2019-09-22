@@ -113,9 +113,11 @@ function replaced_Send(s: TSocket; var Buf; len, flags: Integer): Integer; stdca
 var
   p:pansiChar;
   pb:PByte;
-
 begin
-  THookSocketProcessor.getInstance().DataPackage.ReplacePrice(Buf,len);
+  //这儿进行接收的数据处理
+  //setlength(gSend,len);
+  //move(buf,gSend[1],len);
+
   result:=original_Send(s,buf,len,flags);
   if(result<1)then exit;
   THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_SEND);

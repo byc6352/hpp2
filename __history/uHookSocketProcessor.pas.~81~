@@ -81,7 +81,6 @@ destructor THookSocketProcessor.Destroy;
 begin
   bProcess:=false;
   myCloseHandle(mhFile);
-  mDataPackage.Suspend();
   mDataPackage.Free;
 end;
 

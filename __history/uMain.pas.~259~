@@ -180,6 +180,7 @@ uses
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
+  myJson:TMyJson;
   jsonObject,jsonObject2: TJSONObject;
   pOut:pOutData;
   jsonData:ansiString;
@@ -187,7 +188,7 @@ begin
 try
   DataFlag:=TdataFlag(msg.WParam);
   pOut:=POutData(msg.lParam);
-  if(pOut=nil)and(DataFlag<>fHostInfo)then exit;
+  //if(pOut=nil)then exit;
   case DataFlag of
   fHostInfo:
     begin
@@ -209,7 +210,11 @@ try
     end;
   fTimePrice:
     begin
-      edtCurPrice.Text:=mHookSocketProcessor.DataPackage.basePrice;
+      //memInfo.Lines.Add('-----TimePrice-----');
+      //memInfo.Lines.Add(DataPackage.cryptedData);
+      //memInfo.Lines.Add(DataPackage.jsonData);
+      myJson:=TmyJson.Create(mHookSocketProcessor.DataPackage.jsonData);
+      edtCurPrice.Text:=myjson.getValue(11);
       if(edtCurPrice.Text<>'')then
         fWeb.mPrice:=strtoint( edtCurPrice.Text);
     end;
@@ -972,7 +977,6 @@ begin
   btnSaveClick(sender);
   //IdSNTP1.Host:='time.windows.com';
   //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.Suspend();
   mHookSocketProcessor.free;
 end;
 

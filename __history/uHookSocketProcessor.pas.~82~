@@ -81,8 +81,7 @@ destructor THookSocketProcessor.Destroy;
 begin
   bProcess:=false;
   myCloseHandle(mhFile);
-  mDataPackage.Suspend();
-  mDataPackage.Free;
+  //mDataPackage.Free;
 end;
 
 class function THookSocketProcessor.getInstance(hForm:HWND):THookSocketProcessor;

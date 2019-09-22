@@ -187,7 +187,7 @@ begin
 try
   DataFlag:=TdataFlag(msg.WParam);
   pOut:=POutData(msg.lParam);
-  if(pOut=nil)and(DataFlag<>fHostInfo)then exit;
+  //if(pOut=nil)then exit;
   case DataFlag of
   fHostInfo:
     begin
@@ -972,7 +972,6 @@ begin
   btnSaveClick(sender);
   //IdSNTP1.Host:='time.windows.com';
   //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.Suspend();
   mHookSocketProcessor.free;
 end;
 

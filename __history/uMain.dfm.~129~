@@ -37,7 +37,7 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = TabSheet1
+    ActivePage = tsAddFuncs
     Align = alClient
     TabOrder = 1
     object TabSheet1: TTabSheet
@@ -629,10 +629,6 @@ object fMain: TfMain
     object tsInfo: TTabSheet
       Caption = #20449#24687#23637#31034
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object memInfo: TMemo
         Left = 0
         Top = 0

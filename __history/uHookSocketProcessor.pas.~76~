@@ -81,7 +81,6 @@ destructor THookSocketProcessor.Destroy;
 begin
   bProcess:=false;
   myCloseHandle(mhFile);
-  mDataPackage.Suspend();
   mDataPackage.Free;
 end;
 
@@ -98,27 +97,16 @@ end;
 procedure THookSocketProcessor.restartPackageParser(hForm:HWND);
 var
   host:stHostInfo;
-  clientId:ansiString;
-  ReplacePriceFlag:tReplacePriceFlag;
-  //hForm:HWND;
-  priceCode:ansiString;
 begin
+  ip:='';
+  port:=0;
   if(assigned(mDataPackage))then
   begin
     host:=mDataPackage.Host ;
-    clientId:=mDataPackage.ClientId;
-    ReplacePriceFlag:=mDataPackage.ReplacePriceFlag;
-    priceCode:=mDataPackage.PriceCode;
-    //hForm:=mDataPackage.hForm;
-
     mDataPackage.Free;
   end;
   mDataPackage:=TDataPackageParser.Create(hForm);
   mDataPackage.Host:=host;
-  mDataPackage.ClientId:=clientId;
-  mDataPackage.ReplacePriceFlag:=ReplacePriceFlag;
-  mDataPackage.hForm:=hForm;
-  mDataPackage.PriceCode:=priceCode;
 end;
 
 //将数据放入队列；

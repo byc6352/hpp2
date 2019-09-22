@@ -273,10 +273,7 @@ begin
     if(length(mClientId)>0) then
       fmain.edtClientId.Text:=mClientId;
     if(length(mBidnumber)>0) then
-    begin
       fmain.edtBidnumber.Text:=mBidnumber;
-      fmain.mHookSocketProcessor.DataPackage.ClientId:=mClientId;
-    end;
   end;
 end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;

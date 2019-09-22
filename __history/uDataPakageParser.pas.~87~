@@ -94,7 +94,7 @@ type
     procedure Execute; override;
   public
     constructor Create(hForm:HWND); overload;
-    destructor Destroy;override;
+    destructor Destroy;
 
     procedure MergePackage(socketHeader:stSocketHeader;pData:pointer);        //组合包
     procedure ReplacePrice(var Buf; len:Integer);
@@ -313,7 +313,7 @@ end;
 procedure TDataPackageParser.ParsePackage(i:integer);
 var
   pHeader:PPackageHeader;
-  //cryptedData,jsonData:ansiString;
+  cryptedData,jsonData:ansiString;
   pData:pointer;
   dataSize:DWORD;
   pOut:PoutData;
@@ -330,14 +330,12 @@ try
   if(pHeader^.ordHigh=3) and (pHeader^.ordLow=1)then                //实时价格
   begin
     mDataFlag:=fTimePrice;
-    setLength(mcryptedData,pHeader^.dwDataSize);
+    setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     mPriceData:=cryptedData;
     mjsonData:=mflash.decryptTimeData(cryptedData);
     mcryptedData:=cryptedData;
-    Log('ParsePackage:mPriceData:'+mPriceData);
-    Log('ParsePackage:cryptedData:'+cryptedData);
-    getCurPrice(mjsonData,mBasePrice);
+    getCurPrice(jsonData,mBasePrice);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码
   begin
@@ -360,9 +358,9 @@ try
   begin
     if(mDataFlag<>fTimePrice)then
     begin
-      setLength(mcryptedData,pHeader^.dwDataSize);
-      copymemory(@mcryptedData[1],pData,pHeader^.dwDataSize);
-      mjsonData:=mflash.decryptData(cryptedData);
+      setLength(cryptedData,pHeader^.dwDataSize);
+      copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
+      jsonData:=mflash.decryptData(cryptedData);
     end;
     pOut:=new(PoutData);
     zeromemory(pOut,sizeof(stOutData));

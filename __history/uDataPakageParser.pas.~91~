@@ -335,8 +335,6 @@ try
     mPriceData:=cryptedData;
     mjsonData:=mflash.decryptTimeData(cryptedData);
     mcryptedData:=cryptedData;
-    Log('ParsePackage:mPriceData:'+mPriceData);
-    Log('ParsePackage:cryptedData:'+cryptedData);
     getCurPrice(mjsonData,mBasePrice);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //«Î«Û—È÷§¬Î
