@@ -55,7 +55,7 @@ type
     mDataFlag:TDataFlag;                                     //数据类型
     mCryptedData:ansiString;                               //加密的数据；
     mJsonData:ansiString;                                //json数据；
-    mStream:tMemoryStream;                                  //二进制数据；
+    //pByteData:pointer;                                  //二进制数据；
     mHostInfo:stHostInfo;                           //host连接信息；
     mDataDirection:DWORD;                            //数据传输方向
     function convertInt(i:integer):integer;
@@ -76,7 +76,6 @@ type
     property DataFalg:TDataFlag read mDataFlag;
     property CryptedData:ansiString read mCryptedData;
     property JsonData:ansiString read mJsonData;
-    property Stream:tMemoryStream read mStream;
   end;
 
 implementation
@@ -90,14 +89,12 @@ begin
   mFlash:=tFlash.Create(uConfig.flashfile);
   mhForm:=hForm;
   mHeaderSize:=sizeof(stPackageHeader);
-  mStream:=tMemoryStream.Create;
   //zeromemory(@mDataPackageArr[0].header,sizeof(stDataPackage)*length(mDataPackageArr));
 end;
 destructor TDataPackageParser.Destroy;
 begin
   bProcess:=false;
   mFlash.free;
-  mStream.Free;
 end;
 
 procedure TDataPackageParser.Execute;
@@ -248,15 +245,15 @@ try
   pData:=pointer(@mDataPackageArr[i].data[0]);
   if(pHeader^.ordHigh=1) and (pHeader^.ordLow=1)then                //上线1-1
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fOnlineRequest;
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fOnlineOK;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fOnlineRequest;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fOnlineOK;
     //pcryptedData:=pointer(DWORD(pData)+sizeof(stPackageHeader));
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     Log('1-1cryptedData:'+cryptedData);
     mjsonData:=mflash.decryptData(cryptedData);
     mcryptedData:=cryptedData;
-    sendMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
   end;
   if(pHeader^.ordHigh=3) and (pHeader^.ordLow=1)then                //实时价格
   begin
@@ -267,55 +264,48 @@ try
     //Log('3-1cryptedData:'+cryptedData);
     mjsonData:=mflash.decryptTimeData(cryptedData);
     mcryptedData:=cryptedData;
-    sendMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fYzCodeRequest;
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageMsgOK;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fYzCodeRequest;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageMsgOK;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
     mjsonData:=mflash.decryptData(cryptedData);
     mcryptedData:=cryptedData;
-    sendMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=4)then                //请求验证码 下载
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fImageDownRequest;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fImageDownRequest;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
     mjsonData:=mflash.decryptData(cryptedData);
     mcryptedData:=cryptedData;
-    sendMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
   end;
   if(pHeader^.ordHigh=4) and (pHeader^.ordLow=1)then                //下载 验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageDownOK;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageDownOK;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
     mjsonData:=mflash.decryptData(cryptedData);
     mcryptedData:=cryptedData;
-    if(pHeader^.dwSize-pHeader^.dwDataSize-mHeaderSize>0)then
-    begin
-      pData:=pointer(DWORD(pdata)+pHeader^.dwDataSize);
-      mStream.Position:=0;
-      mStream.write(pData^,pHeader^.dwSize-pHeader^.dwDataSize-mHeaderSize);
-      mStream.Position:=0;
-    end;
-    sendMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=2)then                //下载 验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fSubmitYzCode;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fSubmitYzCode;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
     mjsonData:=mflash.decryptData(cryptedData);
     mcryptedData:=cryptedData;
-    sendMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(mDataFlag),0);
   end;
 finally
 

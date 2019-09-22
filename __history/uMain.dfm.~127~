@@ -839,7 +839,6 @@ object fMain: TfMain
         Height = 25
         Caption = #37325#21551#21253#35299#26512#22120
         TabOrder = 7
-        OnClick = btnRestartpackageParserClick
       end
     end
   end

@@ -832,15 +832,6 @@ object fMain: TfMain
         TabOrder = 6
         OnClick = btnRestoreSysTimeClick
       end
-      object btnRestartpackageParser: TButton
-        Left = 359
-        Top = 72
-        Width = 100
-        Height = 25
-        Caption = #37325#21551#21253#35299#26512#22120
-        TabOrder = 7
-        OnClick = btnRestartpackageParserClick
-      end
     end
   end
   object Timer1: TTimer

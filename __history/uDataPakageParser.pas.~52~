@@ -248,8 +248,8 @@ try
   pData:=pointer(@mDataPackageArr[i].data[0]);
   if(pHeader^.ordHigh=1) and (pHeader^.ordLow=1)then                //上线1-1
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fOnlineRequest;
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fOnlineOK;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fOnlineRequest;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fOnlineOK;
     //pcryptedData:=pointer(DWORD(pData)+sizeof(stPackageHeader));
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
@@ -271,8 +271,8 @@ try
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fYzCodeRequest;
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageMsgOK;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fYzCodeRequest;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageMsgOK;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
@@ -282,7 +282,7 @@ try
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=4)then                //请求验证码 下载
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fImageDownRequest;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fImageDownRequest;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
@@ -292,7 +292,7 @@ try
   end;
   if(pHeader^.ordHigh=4) and (pHeader^.ordLow=1)then                //下载 验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageDownOK;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageDownOK;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);
@@ -309,7 +309,7 @@ try
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=2)then                //下载 验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fSubmitYzCode;
+    if(mDataPackageArr[mCount].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fSubmitYzCode;
     setLength(cryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     //Log('3-1cryptedData:'+cryptedData);

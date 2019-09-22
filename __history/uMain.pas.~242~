@@ -101,7 +101,6 @@ type
     edtHostPort: TLabeledEdit;
     lbImageMsg: TLabel;
     imgYzCode: TImage;
-    btnRestartpackageParser: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -142,7 +141,6 @@ type
     procedure cmbSelSysChange(Sender: TObject);
     procedure btnSetSysTimeClick(Sender: TObject);
     procedure btnRestoreSysTimeClick(Sender: TObject);
-    procedure btnRestartpackageParserClick(Sender: TObject);
   private
     { Private declarations }
     mHookSocketProcessor:tHookSocketProcessor;
@@ -576,11 +574,6 @@ end;
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
 begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
-end;
-
-procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
-begin
-  mHookSocketProcessor.restartPackageParser(fmain.Handle);
 end;
 
 procedure TfMain.btnRestoreSysTimeClick(Sender: TObject);

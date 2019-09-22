@@ -8,7 +8,7 @@ uses
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
   IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,uHookweb,uData,uLog,uTryDown,uDataDown,shellapi,
-  uHookSocketProcessor,uDataPakageParser,uMyJoson, Vcl.Imaging.pngimage;
+  uHookSocketProcessor,uDataPakageParser,uMyJoson;
    //webhook
 type
   TfMain = class(TForm)
@@ -99,9 +99,6 @@ type
     edtCurPrice: TLabeledEdit;
     edtHostIP: TLabeledEdit;
     edtHostPort: TLabeledEdit;
-    lbImageMsg: TLabel;
-    imgYzCode: TImage;
-    btnRestartpackageParser: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -142,7 +139,6 @@ type
     procedure cmbSelSysChange(Sender: TObject);
     procedure btnSetSysTimeClick(Sender: TObject);
     procedure btnRestoreSysTimeClick(Sender: TObject);
-    procedure btnRestartpackageParserClick(Sender: TObject);
   private
     { Private declarations }
     mHookSocketProcessor:tHookSocketProcessor;
@@ -173,16 +169,12 @@ function DownFileFromServer(const url,localFileName:string):boolean;
 implementation
 
 {$R *.dfm}
-uses
-  json;
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
   DataPackage:TDataPackageParser;
   myJson:TMyJson;
-  jsonObject,jsonObject2: TJSONObject;
 begin
-try
   DataFlag:=TdataFlag(msg.WParam);
   DataPackage:=mHookSocketProcessor.DataPackage;
   case DataFlag of
@@ -223,12 +215,7 @@ try
         memInfo.Lines.Add('-----fImageMsgOK-----');
         memInfo.Lines.Add(DataPackage.cryptedData);
         memInfo.Lines.Add(DataPackage.jsonData);
-        jsonObject:=TJSONObject.ParseJSONValue(DataPackage.jsonData) as TJSONObject;
-        jsonObject2:=TJSONObject(jsonObject.GetValue('response'));
-        jsonObject2:=TJSONObject(jsonObject2.GetValue('data'));
-        lbImageMsg.Caption:=jsonObject2.Values['prompt'].ToString;
-
-        jsonObject.Free;
+        myJson:=TmyJson.Create(DataPackage.jsonData);
     end;
   fImageDownRequest:
     begin
@@ -241,8 +228,6 @@ try
         memInfo.Lines.Add('-----fImageDownOK-----');
         memInfo.Lines.Add(DataPackage.cryptedData);
         memInfo.Lines.Add(DataPackage.jsonData);
-        imgYzCode.Picture.LoadFromStream(DataPackage.Stream);
-
     end;
   fSubmitYzCode:
     begin
@@ -251,9 +236,6 @@ try
         memInfo.Lines.Add(DataPackage.jsonData);
     end;
   end;
-finally
-
-end;
 end;
 procedure TfMain.socketMessage(var msg:TMessage);
 var
@@ -576,11 +558,6 @@ end;
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
 begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
-end;
-
-procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
-begin
-  mHookSocketProcessor.restartPackageParser(fmain.Handle);
 end;
 
 procedure TfMain.btnRestoreSysTimeClick(Sender: TObject);
@@ -950,8 +927,8 @@ begin
   //uDown.stop;
   uDataDown.stop;
   btnSaveClick(sender);
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
   mHookSocketProcessor.free;
 end;
 

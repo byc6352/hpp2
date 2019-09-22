@@ -12,9 +12,7 @@ const
 
 
 type
-    {
   stSocketHeader=record               //socket连接信息；
-    id:DWORD;                         //编号
     s:TSocket;                            //保存旧连接信息
     dwDirection:DWORD;                         //数据方向：接收0，发送1；
     localPort:WORD;
@@ -23,7 +21,6 @@ type
     remoteAddr:array[0..15] of ansichar;
     dwDataSize:DWORD;
   end;
-  }
   stSocketData=record                        //socket数据块；
     header:stSocketHeader;
     pBigData:pointer;                         //指向大数据块的指针；
@@ -36,11 +33,10 @@ type
   private
     bProcess:BOOLEAN;                                            //控制线程执行
     mSocketDataArr:array[0..DATA_ARRAY_MAX_SIZE-1] of  stSocketData;  //数据队列
-    iData,iDataHigh:DWORD;                                                    //当前数据队列最大值；
-    iProcess,iProcessHigh:DWORD;                                                 //当前已处理的数据队列最大值；
+    iData:DWORD;                                                    //当前数据队列最大值；
+    iProcess:DWORD;                                                 //当前已处理的数据队列最大值；
     //mSocketConnectInfo:stSocketConnectInfo;                          //socket连接信息；
     mhFile:HWND;
-    mhForm:HWND;
     mDataPackage:TDataPackageParser;                                            //解析包；
     procedure getSocketConnectInfo(s:TSocket;var socketHeader:stSocketHeader);
     procedure SaveSocketDataToFile(socketHeader:stSocketHeader;pData:pointer);
@@ -48,13 +44,11 @@ type
     //procedure ParseData(dataDirection,dataSize: DWORD;pData:pointer);
     //procedure SetFormHandle(hForm:HWND);
     //function convertInt(i:integer):integer;
-    function getNeatID(id:DWORD):ansiString;
   protected
     procedure Execute; override;
   public
     constructor Create(hForm:HWND); overload;
     destructor Destroy;
-    procedure restartPackageParser(hForm:HWND);
     class function getInstance():THookSocketProcessor; overload;
     class function getInstance(hForm:HWND):THookSocketProcessor; overload;
     procedure addSocketData(s: TSocket; var Buf; len, dataDirection: Integer); //添加socket数据进来；
@@ -73,9 +67,8 @@ var
 constructor THookSocketProcessor.Create(hForm:HWND);
 begin
   inherited Create(false);
-  bProcess:=true;                                           //程序开始时启动线程，直到程序结束；
+  bProcess:=true;                                              //程序开始时启动线程，直到程序结束；
   mDataPackage:=TDataPackageParser.Create(hForm);
-  mhForm:=hForm;
 end;
 destructor THookSocketProcessor.Destroy;
 begin
@@ -83,7 +76,6 @@ begin
   myCloseHandle(mhFile);
   mDataPackage.Free;
 end;
-
 class function THookSocketProcessor.getInstance(hForm:HWND):THookSocketProcessor;
 begin
   if not assigned(HookSocketProcessor) then
@@ -94,16 +86,10 @@ class function THookSocketProcessor.getInstance():THookSocketProcessor;
 begin
   result:=getInstance(0);
 end;
-procedure THookSocketProcessor.restartPackageParser(hForm:HWND);
-begin
-  if(assigned(mDataPackage))then mDataPackage.Free;
-  mDataPackage:=TDataPackageParser.Create(hForm);
-end;
 
 //将数据放入队列；
 procedure THookSocketProcessor.addSocketData(s: TSocket; var Buf; len, dataDirection: Integer); //添加socket数据进来；
 begin
-  mSocketDataArr[iData].header.id:=iData;
   mSocketDataArr[iData].header.dwDataSize:=len;
   mSocketDataArr[iData].header.dwDirection:=dataDirection;
   getSocketConnectInfo(s,mSocketDataArr[iData].header);
@@ -119,14 +105,14 @@ begin
   end;
 
   iData:=iData+1;
-  if(iData>=DATA_ARRAY_MAX_SIZE)then begin iData:=0;iDataHigh:=iDataHigh+1;end;
+  if(iData>=DATA_ARRAY_MAX_SIZE)then iData:=0;
 end;
 procedure THookSocketProcessor.Execute;
 begin
   while bProcess do
   begin
     //Log(inttostr(iProcess)+'  '+inttostr(iData));
-    if(iProcess<iData)or(iProcessHigh<iDataHigh)then
+    if(iProcess<iData)then
     begin
 
       if(mSocketDataArr[iProcess].pBigData<>nil)then
@@ -135,7 +121,7 @@ begin
         begin
           SaveSocketDataToFile(header,pBigData);
           //ParseData(dwDirection,dwDataSize,pBigData);
-          mDataPackage.MergePackage(header,pBigData);
+          //if(bHost)then mDataPackage.MergePackage(dwDirection,dwDataSize,pBigData);
         end;
         freemem(mSocketDataArr[iProcess].pBigData);
         mSocketDataArr[iProcess].pBigData:=nil;
@@ -144,13 +130,12 @@ begin
         with mSocketDataArr[iProcess] do
         begin
           SaveSocketDataToFile(header,@data[0]);
-          mDataPackage.MergePackage(header,@data[0]);
           //ParseData(dwDirection,dwDataSize,@data[0]);
           //if(bHost)then mDataPackage.MergePackage(dwDirection,dwDataSize,pBigData);
         end;
       end;
       iProcess:=iProcess+1;
-      if(iProcess>=DATA_ARRAY_MAX_SIZE)then begin iProcess:=0;iProcessHigh:=iProcessHigh+1;end;
+      if(iProcess>=DATA_ARRAY_MAX_SIZE)then iProcess:=0;
     end
     else begin
       sleep(1000);
@@ -178,7 +163,7 @@ begin
     //getSocketConnectInfo(s,mSocketConnectInfo);
     if(socketHeader.dwDirection=DATA_DIRECTION_RECV)then dataId:='recv';
     if(socketHeader.dwDirection=DATA_DIRECTION_SEND)then dataId:='send';
-    header:=#13#10#13#10+'('+getNeatID(socketHeader.id)+')'+getDateTimeString(now(),0)+'--------'+dataId+'--------local:('+socketHeader.localAddr
+    header:=#13#10#13#10+getDateTimeString(now(),0)+'--------'+dataId+'--------local:('+socketHeader.localAddr
       +'  port:'+inttostr(socketHeader.localPort)+')remote:(' +socketHeader.remoteAddr+'  port:'+inttostr(socketHeader.remotePort)+')size:'+inttostr(socketHeader.dwDataSize)+#13#10#13#10;
     ret:=writeFile(mhFile,header[1],length(header),NumberOfBytesWritten,0);
     if(ret=false)then begin CloseHandle(mhFile);mhFile:=0;exit;end;
@@ -213,8 +198,8 @@ var
   addr_v4:sockaddr_in;
   ret,addr_len:integer;
 begin
-  if(integer(s)=integer(socketHeader.s))then exit;  //还是同一个连接就退出
-  socketHeader.s:=s;
+  if(integer(s)=integer(socketConnectInfo.s))then exit;  //还是同一个连接就退出
+  socketConnectInfo.s:=s;
   ZeroMemory(@addr, sizeof(addr));
   addr_len:=sizeof(addr);
   ret:=getsockname(s, addr, addr_len);
@@ -223,8 +208,8 @@ begin
     if (addr.sa_family = AF_INET)then
     begin
       addr_v4 := sockaddr_in(addr);
-      strcopy(socketHeader.localAddr,inet_ntoa(addr_v4.sin_addr));
-      //socketHeader.localAddr:=inet_ntoa(addr_v4.sin_addr);
+
+      socketHeader.localAddr:=inet_ntoa(addr_v4.sin_addr);
       socketHeader.localPort:= ntohs(addr_v4.sin_port);
     end;
   end;
@@ -236,42 +221,12 @@ begin
     if (addr.sa_family = AF_INET)then
     begin
       addr_v4:= sockaddr_in(addr);
-      strcopy(socketHeader.remoteAddr,inet_ntoa(addr_v4.sin_addr));
-      //socketHeader.remoteAddr := inet_ntoa(addr_v4.sin_addr);
+      socketHeader.remoteAddr := inet_ntoa(addr_v4.sin_addr);
       socketHeader.remotePort:= ntohs(addr_v4.sin_port);
     end;
   end;
 end;
 
-function THookSocketProcessor.getNeatID(id:DWORD):ansiString;
-var
-  s:ansiString;
-  len:integer;
-begin
-  s:=inttostr(id);
-  len:=length(s);
-  case len of
-  1:begin
-      result:='0000'+s;
-      exit;
-    end;
-  2:begin
-      result:='000'+s;
-      exit;
-    end;
-  3:begin
-      result:='00'+s;
-      exit;
-    end;
-  4:begin
-      result:='0'+s;
-      exit;
-    end;
-  else begin
-    result:=s;
-  end;
-  end;
-end;
 initialization
 
 finalization

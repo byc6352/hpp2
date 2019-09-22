@@ -2,18 +2,15 @@ unit uMyJoson;
 
 interface
 uses
-  sysutils,strutils,classes,System.json;
+  sysutils,strutils,classes;
 type
   TMyJson=class
-    constructor Create(txt:ansiString);overload;
-    constructor Create(txt:ansiString;bJson:boolean);overload;
+    constructor Create(txt:ansiString);
     destructor Destroy;
   private
     mTxt:tStrings;
-    mJSONObject: TJSONObject;
   public
     function getValue(key:ansiString):ansiString;overload;
-    function getValue(key:ansiString;bJson:boolean):ansiString;overload;
     function getValue(i:integer):ansiString;overload;
   end;
 implementation
@@ -23,38 +20,15 @@ begin
   mTxt.Delimiter:=',';
   mTxt.DelimitedText:=txt;
 end;
-constructor TMyJson.Create(txt:ansiString;bJson:boolean);
-begin
-  if(bJson)then
-  begin
-    mJSONObject:= TJSONObject.ParseJSONValue(txt) as TJSONObject;
-  end
-  else begin
-    Create(txt);
-  end;
-end;
 destructor TMyJson.Destroy;
 begin
-  if(assigned(mTxt))then
-    mTxt.Free;
-  if(assigned(mJSONObject))then
-    mJSONObject.Free;
+  mTxt.Free;
 end;
 function TMyJson.getValue(i:integer):ansiString;
 begin
   result:='';
   if i>=mTxt.Count then exit;
   result:=mtxt[i];
-end;
-function TMyJson.getValue(key:ansiString;bJson:boolean):ansiString;
-begin
-  if(bJson)then
-  begin
-    result:=mJSONObject.Values[key].ToString;
-  end
-  else begin
-    result:=getValue(key);
-  end;
 end;
 function TMyJson.getValue(key:ansiString):ansiString;
 var

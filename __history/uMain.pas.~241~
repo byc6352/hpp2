@@ -101,7 +101,6 @@ type
     edtHostPort: TLabeledEdit;
     lbImageMsg: TLabel;
     imgYzCode: TImage;
-    btnRestartpackageParser: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -142,7 +141,6 @@ type
     procedure cmbSelSysChange(Sender: TObject);
     procedure btnSetSysTimeClick(Sender: TObject);
     procedure btnRestoreSysTimeClick(Sender: TObject);
-    procedure btnRestartpackageParserClick(Sender: TObject);
   private
     { Private declarations }
     mHookSocketProcessor:tHookSocketProcessor;
@@ -229,6 +227,7 @@ try
         lbImageMsg.Caption:=jsonObject2.Values['prompt'].ToString;
 
         jsonObject.Free;
+        jsonObject2.Free;
     end;
   fImageDownRequest:
     begin
@@ -576,11 +575,6 @@ end;
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
 begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
-end;
-
-procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
-begin
-  mHookSocketProcessor.restartPackageParser(fmain.Handle);
 end;
 
 procedure TfMain.btnRestoreSysTimeClick(Sender: TObject);
@@ -950,8 +944,8 @@ begin
   //uDown.stop;
   uDataDown.stop;
   btnSaveClick(sender);
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
   mHookSocketProcessor.free;
 end;
 

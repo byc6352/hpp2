@@ -36,11 +36,10 @@ type
   private
     bProcess:BOOLEAN;                                            //控制线程执行
     mSocketDataArr:array[0..DATA_ARRAY_MAX_SIZE-1] of  stSocketData;  //数据队列
-    iData,iDataHigh:DWORD;                                                    //当前数据队列最大值；
-    iProcess,iProcessHigh:DWORD;                                                 //当前已处理的数据队列最大值；
+    iData:DWORD;                                                    //当前数据队列最大值；
+    iProcess:DWORD;                                                 //当前已处理的数据队列最大值；
     //mSocketConnectInfo:stSocketConnectInfo;                          //socket连接信息；
     mhFile:HWND;
-    mhForm:HWND;
     mDataPackage:TDataPackageParser;                                            //解析包；
     procedure getSocketConnectInfo(s:TSocket;var socketHeader:stSocketHeader);
     procedure SaveSocketDataToFile(socketHeader:stSocketHeader;pData:pointer);
@@ -54,7 +53,6 @@ type
   public
     constructor Create(hForm:HWND); overload;
     destructor Destroy;
-    procedure restartPackageParser(hForm:HWND);
     class function getInstance():THookSocketProcessor; overload;
     class function getInstance(hForm:HWND):THookSocketProcessor; overload;
     procedure addSocketData(s: TSocket; var Buf; len, dataDirection: Integer); //添加socket数据进来；
@@ -73,9 +71,8 @@ var
 constructor THookSocketProcessor.Create(hForm:HWND);
 begin
   inherited Create(false);
-  bProcess:=true;                                           //程序开始时启动线程，直到程序结束；
+  bProcess:=true;                                              //程序开始时启动线程，直到程序结束；
   mDataPackage:=TDataPackageParser.Create(hForm);
-  mhForm:=hForm;
 end;
 destructor THookSocketProcessor.Destroy;
 begin
@@ -83,7 +80,6 @@ begin
   myCloseHandle(mhFile);
   mDataPackage.Free;
 end;
-
 class function THookSocketProcessor.getInstance(hForm:HWND):THookSocketProcessor;
 begin
   if not assigned(HookSocketProcessor) then
@@ -93,11 +89,6 @@ end;
 class function THookSocketProcessor.getInstance():THookSocketProcessor;
 begin
   result:=getInstance(0);
-end;
-procedure THookSocketProcessor.restartPackageParser(hForm:HWND);
-begin
-  if(assigned(mDataPackage))then mDataPackage.Free;
-  mDataPackage:=TDataPackageParser.Create(hForm);
 end;
 
 //将数据放入队列；
@@ -119,14 +110,14 @@ begin
   end;
 
   iData:=iData+1;
-  if(iData>=DATA_ARRAY_MAX_SIZE)then begin iData:=0;iDataHigh:=iDataHigh+1;end;
+  if(iData>=DATA_ARRAY_MAX_SIZE)then iData:=0;
 end;
 procedure THookSocketProcessor.Execute;
 begin
   while bProcess do
   begin
     //Log(inttostr(iProcess)+'  '+inttostr(iData));
-    if(iProcess<iData)or(iProcessHigh<iDataHigh)then
+    if(iProcess<iData)then
     begin
 
       if(mSocketDataArr[iProcess].pBigData<>nil)then
@@ -150,7 +141,7 @@ begin
         end;
       end;
       iProcess:=iProcess+1;
-      if(iProcess>=DATA_ARRAY_MAX_SIZE)then begin iProcess:=0;iProcessHigh:=iProcessHigh+1;end;
+      if(iProcess>=DATA_ARRAY_MAX_SIZE)then iProcess:=0;
     end
     else begin
       sleep(1000);
