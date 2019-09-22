@@ -102,6 +102,7 @@ type
     lbImageMsg: TLabel;
     imgYzCode: TImage;
     btnRestartpackageParser: TButton;
+    btnTest: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -144,6 +145,7 @@ type
     procedure btnRestoreSysTimeClick(Sender: TObject);
     procedure btnRestartpackageParserClick(Sender: TObject);
     procedure rbtnUpdateNoClick(Sender: TObject);
+    procedure btnTestClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -160,6 +162,7 @@ type
     procedure getVerCode(url:string);
     procedure AppException(Sender: TObject; E: Exception);
     procedure showYzcodePng(pData:pointer;dwSize:DWORD);
+    procedure backupFlashLog();
   public
     { Public declarations }
     mHookSocketProcessor:tHookSocketProcessor;
@@ -177,10 +180,21 @@ implementation
 {$R *.dfm}
 uses
   json;
+procedure TfMain.backupFlashLog();
+var
+  logFile,newFile:String;
+begin
+  logFile:=GetEnvironmentVariable('APPDATA');
+  logFile:=logFile+'\Macromedia\Flash Player\Logs\flashlog.txt';
+  newFile:=uFuncs.getFilename(uConfig.datadir,'flashlog','.txt');
+  if(fileExists(logFile))then
+  begin
+    copyfile(pchar(logFile),pchar(newFile),false);
+  end;
+end;
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
-  myJson:TMyJson;
   jsonObject,jsonObject2: TJSONObject;
   pOut:pOutData;
   jsonData:ansiString;
@@ -188,12 +202,13 @@ begin
 try
   DataFlag:=TdataFlag(msg.WParam);
   pOut:=POutData(msg.lParam);
-  if(pOut=nil)then exit;
+  if(pOut=nil)and(DataFlag<>fHostInfo)then exit;
   case DataFlag of
   fHostInfo:
     begin
       edtHostIP.Text:=mHookSocketProcessor.DataPackage.host.ip;
       edtHostPort.Text:=inttostr(mHookSocketProcessor.DataPackage.host.port);
+      exit;
     end;//fHostInfo
   fOnlineRequest:
     begin
@@ -209,12 +224,9 @@ try
     end;
   fTimePrice:
     begin
-      //memInfo.Lines.Add('-----TimePrice-----');
-      //memInfo.Lines.Add(DataPackage.cryptedData);
-      //memInfo.Lines.Add(DataPackage.jsonData);
-      myJson:=TmyJson.Create(mHookSocketProcessor.DataPackage.jsonData);
-      edtCurPrice.Text:=myjson.getValue(11);
-      fWeb.mPrice:=strtoint( edtCurPrice.Text);
+      edtCurPrice.Text:=mHookSocketProcessor.DataPackage.basePrice;
+      if(edtCurPrice.Text<>'')then
+        fWeb.mPrice:=strtoint( edtCurPrice.Text);
     end;
   fYzCodeRequest:
     begin
@@ -246,8 +258,8 @@ try
   fSubmitYzCode:
     begin
       memInfo.Lines.Add('-----fSubmitYzCode-----');
-      memInfo.Lines.Add(DataPackage.cryptedData);
-      memInfo.Lines.Add(DataPackage.jsonData);
+      memInfo.Lines.Add(pOut^.cryptedData);
+      memInfo.Lines.Add(pOut^.jsonData);
     end;
   end;
 finally
@@ -665,6 +677,11 @@ begin
 
 end;
 
+procedure TfMain.btnTestClick(Sender: TObject);
+begin
+ShowMessage(GetEnvironmentVariable('APPDATA'));
+end;
+
 procedure TfMain.btnTestInputAddPriceParamClick(Sender: TObject);
 var
   ss:tstrings;
@@ -973,9 +990,10 @@ begin
   //uDown.stop;
   uDataDown.stop;
   btnSaveClick(sender);
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.free;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
+  //mHookSocketProcessor.Suspend();
+  //mHookSocketProcessor.free;
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);

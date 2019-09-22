@@ -102,6 +102,10 @@ type
     lbImageMsg: TLabel;
     imgYzCode: TImage;
     btnRestartpackageParser: TButton;
+    btnTest: TButton;
+    btnRecordScreen: TButton;
+    edtVideoTimeLength: TLabeledEdit;
+    edtRequestData: TLabeledEdit;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -144,6 +148,8 @@ type
     procedure btnRestoreSysTimeClick(Sender: TObject);
     procedure btnRestartpackageParserClick(Sender: TObject);
     procedure rbtnUpdateNoClick(Sender: TObject);
+    procedure btnTestClick(Sender: TObject);
+    procedure btnRecordScreenClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -160,6 +166,7 @@ type
     procedure getVerCode(url:string);
     procedure AppException(Sender: TObject; E: Exception);
     procedure showYzcodePng(pData:pointer;dwSize:DWORD);
+    procedure backupFlashLog();
   public
     { Public declarations }
     mHookSocketProcessor:tHookSocketProcessor;
@@ -177,6 +184,18 @@ implementation
 {$R *.dfm}
 uses
   json;
+procedure TfMain.backupFlashLog();
+var
+  logFile,newFile:String;
+begin
+  logFile:=GetEnvironmentVariable('APPDATA');
+  logFile:=logFile+'\Macromedia\Flash Player\Logs\flashlog.txt';
+  newFile:=uFuncs.getFilename(uConfig.datadir,'flashlog','.txt');
+  if(fileExists(logFile))then
+  begin
+    copyfile(pchar(logFile),pchar(newFile),false);
+  end;
+end;
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
@@ -218,6 +237,7 @@ try
       memInfo.Lines.Add('-----fYzCodeRequest-----');
       memInfo.Lines.Add(pOut^.cryptedData);
       memInfo.Lines.Add(pOut^.jsonData);
+      edtRequestData.Text:=mHookSocketProcessor.DataPackage.Requestdata;
     end;
   fImageMsgOK:
     begin
@@ -598,6 +618,13 @@ begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
 end;
 
+procedure TfMain.btnRecordScreenClick(Sender: TObject);
+var
+  cmd:ansiString;
+begin
+  cmd:='aa';
+end;
+
 procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
 begin
   mHookSocketProcessor.restartPackageParser(fmain.Handle);
@@ -660,6 +687,11 @@ begin
   DateTimeToSystemTime(DateTime,systemtime);   //把Delphi的TDateTime格式转化为API的TSystemTime格式
   SetLocalTime(SystemTime);
 
+end;
+
+procedure TfMain.btnTestClick(Sender: TObject);
+begin
+ShowMessage(GetEnvironmentVariable('APPDATA'));
 end;
 
 procedure TfMain.btnTestInputAddPriceParamClick(Sender: TObject);
@@ -968,12 +1000,13 @@ end;
 procedure TfMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   //uDown.stop;
+  backupFlashLog();
   uDataDown.stop;
   btnSaveClick(sender);
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.Suspend();
-  mHookSocketProcessor.free;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
+  //mHookSocketProcessor.Suspend();
+  //mHookSocketProcessor.free;
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);

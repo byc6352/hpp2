@@ -102,6 +102,8 @@ var
   ReplacePriceFlag:tReplacePriceFlag;
   //hForm:HWND;
   priceCode:ansiString;
+  RequestHeader:stPackageHeader;
+  requestData:ansiString;
 begin
   if(assigned(mDataPackage))then
   begin
@@ -109,6 +111,8 @@ begin
     clientId:=mDataPackage.ClientId;
     ReplacePriceFlag:=mDataPackage.ReplacePriceFlag;
     priceCode:=mDataPackage.PriceCode;
+    RequestHeader:=mDataPackage.requestHeader;
+    requestData:=mDataPackage.requestData;
     //hForm:=mDataPackage.hForm;
 
     mDataPackage.Free;
@@ -119,6 +123,8 @@ begin
   mDataPackage.ReplacePriceFlag:=ReplacePriceFlag;
   mDataPackage.hForm:=hForm;
   mDataPackage.PriceCode:=priceCode;
+  mDataPackage.RequestHeader:=RequestHeader;
+  mDataPackage.requestData:=requestData;
 end;
 
 //将数据放入队列；

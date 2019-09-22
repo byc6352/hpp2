@@ -37,7 +37,7 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = TabSheet1
+    ActivePage = tsAddFuncs
     Align = alClient
     TabOrder = 1
     object TabSheet1: TTabSheet
@@ -629,10 +629,6 @@ object fMain: TfMain
     object tsInfo: TTabSheet
       Caption = #20449#24687#23637#31034
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object memInfo: TMemo
         Left = 0
         Top = 0
@@ -648,14 +644,14 @@ object fMain: TfMain
       ImageIndex = 2
       object lbImageMsg: TLabel
         Left = 14
-        Top = 144
+        Top = 283
         Width = 57
         Height = 13
         Caption = 'lbImageMsg'
       end
       object imgYzCode: TImage
         Left = 14
-        Top = 172
+        Top = 311
         Width = 227
         Height = 85
         Picture.Data = {
@@ -716,7 +712,7 @@ object fMain: TfMain
       end
       object btnSave: TButton
         Left = 8
-        Top = 72
+        Top = 131
         Width = 75
         Height = 25
         Caption = #20445#23384
@@ -731,6 +727,7 @@ object fMain: TfMain
         Align = alBottom
         Caption = #20215#26684#20462#25913
         TabOrder = 4
+        ExplicitTop = 550
         object rbtnUpdateNo: TRadioButton
           Left = 14
           Top = 24
@@ -820,10 +817,20 @@ object fMain: TfMain
           EditLabel.Caption = #26381#21153#22120#31471#21475#65306
           TabOrder = 8
         end
+        object edtRequestData: TLabeledEdit
+          Left = 284
+          Top = 113
+          Width = 315
+          Height = 21
+          EditLabel.Width = 72
+          EditLabel.Height = 13
+          EditLabel.Caption = 'requestData'#65306
+          TabOrder = 9
+        end
       end
       object btnSetSysTime: TButton
         Left = 117
-        Top = 72
+        Top = 131
         Width = 100
         Height = 25
         Caption = #35774#32622#31995#32479#26102#38388
@@ -832,7 +839,7 @@ object fMain: TfMain
       end
       object btnRestoreSysTime: TButton
         Left = 244
-        Top = 72
+        Top = 131
         Width = 100
         Height = 25
         Caption = #24674#22797' '#31995#32479#26102#38388
@@ -841,12 +848,41 @@ object fMain: TfMain
       end
       object btnRestartpackageParser: TButton
         Left = 359
-        Top = 72
+        Top = 131
         Width = 100
         Height = 25
         Caption = #37325#21551#21253#35299#26512#22120
         TabOrder = 7
         OnClick = btnRestartpackageParserClick
+      end
+      object btnTest: TButton
+        Left = 492
+        Top = 131
+        Width = 75
+        Height = 25
+        Caption = 'test'
+        TabOrder = 8
+        OnClick = btnTestClick
+      end
+      object btnRecordScreen: TButton
+        Left = 113
+        Top = 66
+        Width = 75
+        Height = 25
+        Caption = #24405#21046#23631#24149
+        TabOrder = 9
+        OnClick = btnRecordScreenClick
+      end
+      object edtVideoTimeLength: TLabeledEdit
+        Left = 7
+        Top = 68
+        Width = 100
+        Height = 21
+        EditLabel.Width = 92
+        EditLabel.Height = 13
+        EditLabel.Caption = #35270#39057#26102#38271'('#20998#38047')'#65306
+        TabOrder = 10
+        Text = '60'
       end
     end
   end

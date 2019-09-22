@@ -13,7 +13,6 @@ type
     constructor Create(swfFileName : ansiString);
     destructor Destroy;   //override;
     function getNewData(const priceData,oldData,clientId,priceCode:ansistring):ansistring;
-    function replaceRequest(const priceData,oldData,clientId:ansistring):ansistring;
     function decryptData(const data:ansistring):ansistring;
     function cryptData(const data:ansistring):ansistring;
     function CryptTimeData(const data:ansistring):ansistring;
@@ -36,19 +35,6 @@ begin
     swf.Free;
     swf:=nil;
   end;
-end;
-function TFlash.replaceRequest(const priceData,oldData,clientId:ansistring):ansistring;
-var
-  tmp: WideString;
-  Response:ansiString;
-begin
-  //tmp := TXMLParase.EncodeData('decrptData', [ansistring(trim(edtInput.Text))]);
-  tmp := EncodeData('replaceRequest', [priceData,oldData,clientId]);
-  tmp:=swf.CallFunction(tmp);
-  Response:=tmp;  //<string></string>
-  Response:=midstr(Response,9,length(Response)-17);
-  Response:=replaceStr(Response,'&quot;','"');
-  result:=Response;
 end;
 function TFlash.getNewData(const priceData,oldData,clientId,priceCode:ansistring):ansistring;
 var

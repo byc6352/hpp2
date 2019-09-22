@@ -107,23 +107,20 @@ var
   bHook:boolean;
 implementation
 uses
-  HookUtils,uDataDown,uDataSocket,uLog;
+  HookUtils,uDataDown,uDataSocket,uLog,uHookSocketProcessor;
 
 function replaced_Send(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
 var
   p:pansiChar;
-begin
-  //这儿进行接收的数据处理
-  //setlength(gSend,len);
-  //move(buf,gSend[1],len);
+  pb:PByte;
 
+begin
+  THookSocketProcessor.getInstance().DataPackage.ReplaceRequestAndPrice(s,buf,len,flags);
+  //THookSocketProcessor.getInstance().DataPackage.ReplacePrice(Buf,len);
   result:=original_Send(s,buf,len,flags);
-  if(result<0)then exit;
-  SaveSocketToFile('send',Buf,len);
-  //p:=pointer(integer(@Buf)+22);
-  //gData:=p;
-  //postMessage(hform, WM_CAP_WORK,len,0);
-  MessageBeep(1000); //简单的响一声
+  if(result<1)then exit;
+  THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_SEND);
+  //MessageBeep(1000); //简单的响一声
 end;
 
 function replaced_Recv(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
@@ -133,11 +130,12 @@ begin
 
   result:=original_Recv(s,buf,len,flags);
   if(result<1)then exit;
-  SaveSocketToFile('Recv',Buf,len);
+  THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_RECV);
+  //SaveSocketDataToFile('Recv',s,Buf,result);
   //p:=pointer(integer(@Buf)+22);
   //gData:=p;
   //postMessage(hform, WM_CAP_WORK,len,1);
-  MessageBeep(10000); //简单的响一声
+  //MessageBeep(10000); //简单的响一声
 end;
 
   //InternetCloseHandle

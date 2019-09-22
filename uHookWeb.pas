@@ -111,19 +111,15 @@ uses
 
 function replaced_Send(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
 var
-  p:pansiChar;
-  pb:PByte;
-
+  a:array[0..15] of ansichar;
 begin
-  THookSocketProcessor.getInstance().DataPackage.ReplacePrice(Buf,len);
+  THookSocketProcessor.getInstance().DataPackage.ReplaceRequestAndPrice(s,buf,len,flags);
+  //THookSocketProcessor.getInstance().DataPackage.ReplacePrice(Buf,len);
+  //a:='test.';
+  //original_Send(s,a,16,flags);
   result:=original_Send(s,buf,len,flags);
   if(result<1)then exit;
   THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_SEND);
-  //SaveSocketDataToFile('send',s,Buf,result);
-  //if(result<26)then exit;
-  //p:=pointer(integer(@Buf)+22);
-  //gData:=p;
-  //postMessage(hform, WM_CAP_WORK,len,0);
   //MessageBeep(1000); //¼òµ¥µÄÏìÒ»Éù
 end;
 

@@ -180,7 +180,6 @@ uses
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
-  myJson:TMyJson;
   jsonObject,jsonObject2: TJSONObject;
   pOut:pOutData;
   jsonData:ansiString;
@@ -188,12 +187,13 @@ begin
 try
   DataFlag:=TdataFlag(msg.WParam);
   pOut:=POutData(msg.lParam);
-  //if(pOut=nil)then exit;
+  if(pOut=nil)and(DataFlag<>fHostInfo)then exit;
   case DataFlag of
   fHostInfo:
     begin
       edtHostIP.Text:=mHookSocketProcessor.DataPackage.host.ip;
       edtHostPort.Text:=inttostr(mHookSocketProcessor.DataPackage.host.port);
+      exit;
     end;//fHostInfo
   fOnlineRequest:
     begin
@@ -209,12 +209,9 @@ try
     end;
   fTimePrice:
     begin
-      //memInfo.Lines.Add('-----TimePrice-----');
-      //memInfo.Lines.Add(DataPackage.cryptedData);
-      //memInfo.Lines.Add(DataPackage.jsonData);
-      myJson:=TmyJson.Create(mHookSocketProcessor.DataPackage.jsonData);
-      edtCurPrice.Text:=myjson.getValue(11);
-      fWeb.mPrice:=strtoint( edtCurPrice.Text);
+      edtCurPrice.Text:=mHookSocketProcessor.DataPackage.basePrice;
+      if(edtCurPrice.Text<>'')then
+        fWeb.mPrice:=strtoint( edtCurPrice.Text);
     end;
   fYzCodeRequest:
     begin
@@ -975,7 +972,8 @@ begin
   btnSaveClick(sender);
   //IdSNTP1.Host:='time.windows.com';
   //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.free;
+  //mHookSocketProcessor.Suspend();
+  //mHookSocketProcessor.free;
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);

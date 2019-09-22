@@ -2,7 +2,7 @@ unit uDataPakageParser;
 
 interface
 uses
-  windows,classes,winsock2,sysutils,strutils,uFlash,messages;
+  windows,classes,winsock2,sysutils,strutils,uFlash,messages,uHookWeb;
 
 const
   WM_PACKAGE_PARSER = WM_USER+1004;               //数据包解析消息
@@ -61,6 +61,8 @@ type
     mMergeStateFlag:TMergeStateFlag;                                 //组合包状态；
     mFlash:tFlash;
     mPriceData,mPriceCode,mbasePrice:ansiString;                                           //价格数据；
+    mRequestData:ansiString;                                        //请求验证码数据
+    mRequestHeader:stPackageHeader;                                 //请求验证码数据头
     //-------------------------------------属性--------------------------------------------
     mDataFlag:TDataFlag;                                     //数据类型
     mCryptedData:ansiString;                               //加密的数据；
@@ -84,12 +86,15 @@ type
     //procedure setHostInfo(ip:ansiString;port:word);
     procedure getPriceCode(jsonData:ansiString);
     procedure getCurPrice(jsonData:ansiString;var curPrice:ansiString);
+    //procedure getCurPrice(jsonData:ansiString;var curPrice:ansiString);
     //--------------------------------------------------------------------------------------
     procedure setHostInfo(Host:stHostInfo);
     procedure setReplacePriceFlag(ReplacePriceFlag:TReplacePriceFlag);
     procedure setClientId(clientId:ansiString);
     procedure SetFormHandle(hForm:HWND);
     procedure SetPriceCode(priceCode:ansiString);
+    procedure setRequestData(RequestData:ansiString);
+    procedure setRequestHeader(RequestHeader:stPackageHeader);
   protected
     procedure Execute; override;
   public
@@ -98,6 +103,7 @@ type
 
     procedure MergePackage(socketHeader:stSocketHeader;pData:pointer);        //组合包
     procedure ReplacePrice(var Buf; len:Integer);
+    procedure ReplaceRequestAndPrice(s: TSocket; var Buf; len, flags: Integer);
 
 
     property DataFalg:TDataFlag read mDataFlag;
@@ -112,6 +118,8 @@ type
     property hForm:HWND read mhForm write SetFormHandle;                                  // write setHostInfo
     property PriceCode:ansiString read mPriceCode write SetPriceCode;
     property basePrice:ansiString read mbasePrice;
+    property RequestData:ansiString read mRequestData write setRequestData;
+    property RequestHeader:stPackageHeader read mRequestHeader write setRequestHeader;
   end;
 
 implementation
@@ -150,7 +158,7 @@ begin
       mProcess:=mProcess+1;
     end else
     begin
-      if(mMergeWorkingFlag<>fBuzy)and(mCount>0)then
+      if(mMergeWorkingFlag<>fBuzy)and(mCount>0)and(mMergeStateFlag<>fCopyHeaderComplete)then
       begin
         mCount:=0;
         mProcess:=0;
@@ -158,6 +166,65 @@ begin
       sleep(1000);
     end;
   end;
+end;
+procedure TDataPackageParser.ReplaceRequestAndPrice(s: TSocket; var Buf; len, flags: Integer);
+var
+  header:stPackageHeader;
+  oldData,newData:ansiString;
+  pData,pBuf:pointer;
+  dwSize,dwDataSize:DWORD;
+begin
+  if(len<mHeaderSize)then exit;
+  pBuf:=nil;
+  pData:=nil;
+try
+  move(Buf,header,mHeaderSize);
+  if not VerifyPackageHeader(@header) then exit;
+  if(header.ordHigh<>2)or(header.ordLow<>2)then exit;
+  if(mReplacePriceFlag=fReplaceDouble)then
+  begin
+    oldData:=mRequestData;
+    if(oldData='')or (mPriceData='')or(clientId='')then
+    begin
+      Log(format('ReplaceRequestAndPrice:oldData:%s    mPriceData:%s    clientId:%s',[oldData,mPriceData,clientId]));
+      exit;
+    end;
+    newData:=mFlash.replaceRequest(mPriceData,oldData,clientId);
+    dwSize:=mRequestHeader.dwSize;
+    dwDataSize:=mRequestHeader.dwDataSize;
+    if(dwDataSize<>length(newData))or(dwSize<>mHeaderSize+length(newData))then
+    begin
+      Log('mRequestHeader.dwDataSize<>length(newDAta).');
+      exit;
+    end;
+    mRequestHeader.dwSize:=convertInt(mRequestHeader.dwSize);
+    mRequestHeader.dwDataSize:=convertInt(mRequestHeader.dwDataSize);
+    getmem(pBuf,dwSize);
+    copymemory(pBuf,@mRequestHeader,mHeaderSize);
+    pData:=pointer(DWORD(pBuf)+mHeaderSize);
+    copymemory(pData,@newData[1],length(newData));
+
+    if(original_Send(s,pBuf^,dwSize,flags)<=0)then
+    begin
+      Log('original_Send mRequest:false.');
+      exit;
+    end;
+    Log('ReplaceDouble:oldData'+oldData);
+    Log('ReplaceDouble:newData'+newData);
+  end;
+  if(mReplacePriceFlag=fReplaceOne)or(mReplacePriceFlag=fReplaceDouble)then
+  begin
+    setLength(oldData,header.dwDataSize);
+    pData:=pointer(DWORD(@Buf)+mHeaderSize);
+    copymemory(@oldData[1],pData,header.dwDataSize);
+    newData:=mFlash.getNewData(mPriceData,oldData,clientId,mPriceCode);
+    copymemory(pData,@newData[1],header.dwDataSize);
+    Log('ReplacePrice:oldData'+oldData);
+    Log('ReplacePrice:newData'+newData);
+  end;
+finally
+  if(pBuf<>nil)then freemem(pBuf);
+end;
 end;
 procedure TDataPackageParser.ReplacePrice(var Buf; len:Integer);
 var
@@ -341,7 +408,10 @@ try
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fYzCodeRequest;
+    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then
+    begin
+     mDataFlag:=fYzCodeRequest;
+    end;
     if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageMsgOK;
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=4)then                //请求验证码 下载
@@ -363,6 +433,11 @@ try
       setLength(mcryptedData,pHeader^.dwDataSize);
       copymemory(@mcryptedData[1],pData,pHeader^.dwDataSize);
       mjsonData:=mflash.decryptData(cryptedData);
+    end;
+    if(mDataFlag=fYzCodeRequest)then
+    begin
+      mRequestData:=cryptedData;
+      copymemory(@mRequestHeader,pHeader,mHeaderSize);
     end;
     pOut:=new(PoutData);
     zeromemory(pOut,sizeof(stOutData));
@@ -390,8 +465,9 @@ try
     if(pOut^.pByteData<>nil)then freeMem(pOut^.pByteData);
     dispose(pOut);
   end;
-finally
-
+except
+  uFuncs.saveTofile(getFileName(uConfig.datadir,inttostr(i)+'packageParseErr','.txt'),pHeader,mHeaderSize);
+  uFuncs.saveTofile(getFileName(uConfig.datadir,inttostr(i)+'packageParseErr','.txt'),pData,pHeader^.dwDataSize);
 end;
 end;
 //-----------------------------------------内部功能---------------------------------------------
@@ -451,6 +527,15 @@ end;
 procedure TDataPackageParser.SetFormHandle(hForm:HWND);
 begin
   mHForm:=hForm;
+end;
+
+procedure TDataPackageParser.setRequestData(RequestData:ansiString);
+begin
+  mRequestData:=RequestData;
+end;
+procedure TDataPackageParser.setRequestHeader(RequestHeader:stPackageHeader);
+begin
+  mRequestHeader:=RequestHeader;
 end;
 
 

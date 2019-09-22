@@ -2,7 +2,7 @@ unit uDataPakageParser;
 
 interface
 uses
-  windows,classes,winsock2,sysutils,strutils,uFlash,messages;
+  windows,classes,winsock2,sysutils,strutils,uFlash,messages,uHookWeb;
 
 const
   WM_PACKAGE_PARSER = WM_USER+1004;               //数据包解析消息
@@ -61,6 +61,8 @@ type
     mMergeStateFlag:TMergeStateFlag;                                 //组合包状态；
     mFlash:tFlash;
     mPriceData,mPriceCode,mbasePrice:ansiString;                                           //价格数据；
+    mRequestData:ansiString;                                        //请求验证码数据
+    mRequestHeader:stPackageHeader;                                 //请求验证码数据头
     //-------------------------------------属性--------------------------------------------
     mDataFlag:TDataFlag;                                     //数据类型
     mCryptedData:ansiString;                               //加密的数据；
@@ -90,14 +92,17 @@ type
     procedure setClientId(clientId:ansiString);
     procedure SetFormHandle(hForm:HWND);
     procedure SetPriceCode(priceCode:ansiString);
+    procedure setRequestData(RequestData:ansiString);
+    procedure setRequestHeader(RequestHeader:stPackageHeader);
   protected
     procedure Execute; override;
   public
     constructor Create(hForm:HWND); overload;
-    destructor Destroy;
+    destructor Destroy;override;
 
     procedure MergePackage(socketHeader:stSocketHeader;pData:pointer);        //组合包
     procedure ReplacePrice(var Buf; len:Integer);
+    procedure ReplaceRequestAndPrice(s: TSocket; var Buf; len, flags: Integer);
 
 
     property DataFalg:TDataFlag read mDataFlag;
@@ -112,11 +117,13 @@ type
     property hForm:HWND read mhForm write SetFormHandle;                                  // write setHostInfo
     property PriceCode:ansiString read mPriceCode write SetPriceCode;
     property basePrice:ansiString read mbasePrice;
+    property RequestData:ansiString read mRequestData write setRequestData;
+    property RequestHeader:stPackageHeader read mRequestHeader write setRequestHeader;
   end;
 
 implementation
 uses
-  uHookSocketProcessor,uConfig,uFuncs,uLog,json,uMyjson;
+  uHookSocketProcessor,uConfig,uFuncs,uLog,json,uMyjoson;
 
 constructor TDataPackageParser.Create(hForm:HWND);
 begin
@@ -158,6 +165,53 @@ begin
       sleep(1000);
     end;
   end;
+end;
+procedure TDataPackageParser.ReplaceRequestAndPrice(s: TSocket; var Buf; len, flags: Integer);
+var
+  header:stPackageHeader;
+  oldData,newData:ansiString;
+  pData:pointer;
+begin
+  if(len<mHeaderSize)then exit;
+try
+
+  move(Buf,header,mHeaderSize);
+  if not VerifyPackageHeader(@header) then exit;
+  if(header.ordHigh<>2)or(header.ordLow<>2)then exit;
+  if(mReplacePriceFlag=fReplaceDouble)then
+  begin
+    oldData:=mRequestData;
+    newData:=mFlash.replaceRequest(mPriceData,oldData,clientId);
+    if(mRequestHeader.dwDataSize<>length(newDAta))then
+    begin
+      Log('mRequestHeader.dwDataSize<>length(newDAta).');
+      exit;
+    end;
+
+    if(original_Send(s,mRequestHeader,mHeaderSize,flags)<=0)then
+    begin
+      Log('original_Send mRequestHeader:false.');
+      exit;
+    end;
+    if(original_Send(s,newData[1],length(newData),flags)<=0)then
+    begin
+      Log('original_Send newData:false.');
+      exit;
+    end;
+  end;
+  if(mReplacePriceFlag=fReplaceOne)or(mReplacePriceFlag=fReplaceDouble)then
+  begin
+    setLength(oldData,header.dwDataSize);
+    pData:=pointer(DWORD(@Buf)+mHeaderSize);
+    copymemory(@oldData[1],pData,header.dwDataSize);
+    newData:=mFlash.getNewData(mPriceData,oldData,clientId,mPriceCode);
+    copymemory(pData,@newData[1],header.dwDataSize);
+    Log('ReplacePrice:oldData'+oldData);
+    Log('ReplacePrice:newData'+newData);
+  end;
+finally
+
+end;
 end;
 procedure TDataPackageParser.ReplacePrice(var Buf; len:Integer);
 var
@@ -313,7 +367,7 @@ end;
 procedure TDataPackageParser.ParsePackage(i:integer);
 var
   pHeader:PPackageHeader;
-  cryptedData,jsonData:ansiString;
+  //cryptedData,jsonData:ansiString;
   pData:pointer;
   dataSize:DWORD;
   pOut:PoutData;
@@ -330,16 +384,21 @@ try
   if(pHeader^.ordHigh=3) and (pHeader^.ordLow=1)then                //实时价格
   begin
     mDataFlag:=fTimePrice;
-    setLength(cryptedData,pHeader^.dwDataSize);
+    setLength(mcryptedData,pHeader^.dwDataSize);
     copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
     mPriceData:=cryptedData;
     mjsonData:=mflash.decryptTimeData(cryptedData);
     mcryptedData:=cryptedData;
-    getCurPrice(jsonData,mBasePrice);
+    Log('ParsePackage:mPriceData:'+mPriceData);
+    Log('ParsePackage:cryptedData:'+cryptedData);
+    getCurPrice(mjsonData,mBasePrice);
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=1)then                //请求验证码
   begin
-    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then mDataFlag:=fYzCodeRequest;
+    if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_SEND)then
+    begin
+     mDataFlag:=fYzCodeRequest;
+    end;
     if(mDataPackageArr[i].dataDirection=DATA_DIRECTION_RECV)then mDataFlag:=fImageMsgOK;
   end;
   if(pHeader^.ordHigh=2) and (pHeader^.ordLow=4)then                //请求验证码 下载
@@ -358,9 +417,14 @@ try
   begin
     if(mDataFlag<>fTimePrice)then
     begin
-      setLength(cryptedData,pHeader^.dwDataSize);
-      copymemory(@cryptedData[1],pData,pHeader^.dwDataSize);
-      jsonData:=mflash.decryptData(cryptedData);
+      setLength(mcryptedData,pHeader^.dwDataSize);
+      copymemory(@mcryptedData[1],pData,pHeader^.dwDataSize);
+      mjsonData:=mflash.decryptData(cryptedData);
+    end;
+    if(mDataFlag=fYzCodeRequest)then
+    begin
+      mRequestData:=cryptedData;
+      copymemory(@mRequestHeader,pHeader,mHeaderSize);
     end;
     pOut:=new(PoutData);
     zeromemory(pOut,sizeof(stOutData));
@@ -397,7 +461,7 @@ procedure TDataPackageParser.getCurPrice(jsonData:ansiString;var curPrice:ansiSt
 var
   myJson:TMyJson;
 begin
-  myJson:=TmyJson.Create(mHookSocketProcessor.DataPackage.jsonData);
+  myJson:=TmyJson.Create(jsonData);
   curPrice:=myjson.getValue(11);
   myJson.Free;
 end;
@@ -449,6 +513,15 @@ end;
 procedure TDataPackageParser.SetFormHandle(hForm:HWND);
 begin
   mHForm:=hForm;
+end;
+
+procedure TDataPackageParser.setRequestData(RequestData:ansiString);
+begin
+  mRequestData:=RequestData;
+end;
+procedure TDataPackageParser.setRequestHeader(RequestHeader:stPackageHeader);
+begin
+  mRequestHeader:=RequestHeader;
 end;
 
 
