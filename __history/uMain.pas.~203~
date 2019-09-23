@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,uWeb,strutils, Vcl.ComCtrls,uXml,uconfig,
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
-  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,uHookweb,uData,uDown,uLog,uTryDown;
+  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,uHookweb,uData,uLog,uTryDown,uDataDown,shellapi;
    //webhook
 type
   TfMain = class(TForm)
@@ -81,9 +81,10 @@ type
     memInfo: TMemo;
     chkPrice: TCheckBox;
     tsAddFuncs: TTabSheet;
-    btnDownVerCode: TButton;
     edtExtFilename: TLabeledEdit;
     edtRemotePath: TLabeledEdit;
+    btnDownVerCode: TButton;
+    btnSave: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -120,6 +121,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnDownVerCodeClick(Sender: TObject);
+    procedure btnSaveClick(Sender: TObject);
   private
     { Private declarations }
     procedure getParamsToCtl(configFile:string);
@@ -143,56 +145,79 @@ var
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
   function initEndTime():string;
-  function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//组合url
-  procedure addDown();
+function DownFileFromServer(const url,localFileName:string):boolean;
 implementation
 
 {$R *.dfm}
+function DownFileFromServer(const url,localFileName:string):boolean;
+var
+  ss: tstrings;
+  mm: TMemoryStream;
+  IdHTTP2:TIdHTTP;
+  IdSSLIOHandlerSocketOpenSSL2:TIdSSLIOHandlerSocketOpenSSL;
+function isUtf8():boolean;
+var
+  responseInfo,responseData:string;
+  //bUtf8,bText:boolean; //Content-Type: text
+begin
+  result:=false;
+  responseInfo:=idhttp2.Response.CharSet;
+  if(responseInfo<>'')then begin
+    responseInfo:=lowercase(responseInfo);
+    if(pos(lowercase('UTF-8'),responseInfo)>0)then begin result:=true;exit;end;
+  end;
+end;
+begin
+  result:=false;
+  ss:=nil;
+  IdSSLIOHandlerSocketOpenSSL2:=nil;
+  try
+    IdHTTP2 := TIdHTTP.create(nil);
+    mm:=TMemoryStream.Create;
+    if(pos(lowercase('https://'),lowercase(url))>0)then begin
+      IdSSLIOHandlerSocketOpenSSL2 := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+      IdHTTP2.IOHandler := IdSSLIOHandlerSocketOpenSSL2;
+    end;
+    //IdHTTP2.IOHandler:=nil else IdHTTP2.IOHandler:=dm.IdSSLIOHandlerSocketOpenSSL1;
+    IdHTTP2.HandleRedirects := True; //[hoInProcessAuth,hoKeepOrigProtocol,hoForceEncodeParams]
+  try
+    //if(pos('http://',url)>0)then idhttp1.IOHandler:=nil else idhttp1.IOHandler:=dm.IdSSLIOHandlerSocketOpenSSL1;
+    //IdHTTP1.HandleRedirects := True; //[hoInProcessAuth,hoKeepOrigProtocol,hoForceEncodeParams]
+    IdHTTP2.ReadTimeout:= 10*60*1000;
+    IdHTTP2.ConnectTimeout := 10*60*1000;
+    IdHTTP2.get(url,mm);
+    mm.Position:=0;
+    //IdHTTP1
+    if(isUtf8())then begin
+      ss:=tstringlist.Create;
+      ss.LoadFromStream(mm,TEncoding.UTF8);
+      ss.SaveToFile(localFileName,Tencoding.UTF8);
+    end else begin
+      mm.SaveToFile(localFileName);
+    end;
+    result:=true;
+    Log(format('IdHTTP2 down file suc:url: %s.   localFileName:%s.',[url,localFileName]));
+  except
+    on E: Exception do
+    begin
+      Log(format('IdHTTP2 down file fail: %s.raise by:%s.',[url,e.Message]));
+      //raise Exception.CreateFmt('IdHTTP1 down file fail: %s.raise by:%s.',[url,e.Message]);
+    end;
+  end;
+  finally
+    if(assigned(IdHTTP2))then IdHTTP2.Free;
+    if(assigned(ss))then ss.Free;
+    if(assigned(mm))then mm.Free;
+    if(assigned(IdSSLIOHandlerSocketOpenSSL2))then IdSSLIOHandlerSocketOpenSSL2.Free;
+  end;
+end;
 procedure TfMain.AppException(Sender: TObject; E: Exception);
 begin
   //Application.ShowException(E);
   //Application.Terminate;
   Log(e.Message);
 end;
-procedure addDown();
-var
-  url,ServerName,ObjectName:string;
-  ServerPort:DWORD;
-begin
-  while iDown<uData.iData do
-  begin
-    ServerName:=uData.datas[iDown].ServerName;
-    ObjectName:=uData.datas[iDown].ObjectName;
-    ServerPort:=uData.datas[iDown].ServerPort;
-    url:=MergeUrl(ServerName,ObjectName,ServerPort);
-    iDown:=iDown+1;
-    if(url='')then continue;
-    uDown.addUrl(url);
-  end;
 
-end;
-function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//组合url
-var
-  protocol:string;
-begin
-  result:='';
-  if(servername='')or(serverport=0)then exit;
-  if(ObjectName[1]<>'/')then exit;
-  protocol:='http';
-  //if(ObjectName2[1]<>'/')then ObjectName2:='/'+ObjectName;
-  case ServerPort of
-  80:begin
-    result:=protocol+'://'+ServerName+ObjectName;
-  end;
-  443:begin
-    protocol:='https';
-    result:=protocol+'://'+ServerName+ObjectName;
-  end;
-  else begin
-    result:=protocol+'://'+ServerName+':'+inttostr(ServerPort)+ObjectName;
-  end;
-  end;
-end;
 
 procedure TfMain.getVerCode(url:string);
 var
@@ -219,8 +244,8 @@ begin
   i:=msg.LParam;
   j:=msg.WParam;
   case j of
-  0:meminfo.Lines.Add('down fal：'+inttostr(i)+'['+uDown.mdowns[i]+']');
-  1:meminfo.Lines.Add('down suc：'+inttostr(i)+'['+uDown.mdowns[i]+']');
+  0:meminfo.Lines.Add('down fal：'+inttostr(i)+'['+datas[i].ObjectName+']');
+  1:meminfo.Lines.Add('down suc：'+inttostr(i)+'['+datas[i].ObjectName+']');
   2:meminfo.Lines.Add('down suc：'+inttostr(i));
   3:meminfo.Lines.Add('down end：'+inttostr(i));
   end;
@@ -246,8 +271,8 @@ begin
   2:begin
       say:='URL：';
       data:=uData.datas[idata-1].ObjectName;
-      addDown();
-      getVerCode(data);
+      //addDown();
+      if(fweb.state.VirtualSys)then getVerCode(data);
     end;
   end;
   memInfo.Lines.Add(say);
@@ -405,6 +430,18 @@ end;
 procedure TfMain.btnPriceUpdateClick(Sender: TObject);
 begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
+end;
+
+procedure TfMain.btnSaveClick(Sender: TObject);
+var
+  txt:string;
+begin
+  txt:=uData.saveData;
+  if txt<>'' then
+  ShellExecute(Handle,'open','notepad.exe',pchar(txt),nil,1);
+  txt:=uData.saveHeader;
+  if txt<>'' then
+  ShellExecute(Handle,'open','notepad.exe',pchar(txt),nil,1);
 end;
 
 procedure TfMain.btnSaveInputAddPriceParamClick(Sender: TObject);
@@ -600,7 +637,7 @@ procedure TfMain.btnUpdateFinishTimeClick(Sender: TObject);
 begin
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
   //fweb.mFinishTime:=VarToDateTime(trim(edtFinishTime.Text));
-  uData.saveData;
+
   showmessage('更新成功！');
 end;
 
@@ -737,8 +774,9 @@ begin
 end;
 procedure TfMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  uDown.stop;
-  saveData();
+  //uDown.stop;
+  uDataDown.stop;
+  btnSaveClick(sender);
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);
@@ -773,8 +811,9 @@ begin
   TWinControl(fweb.Wb2).Visible:=False;
 
   uHookweb.hform:=fmain.Handle;
-
-  uDown.start(uConfig.webCache,fmain.Handle);
+  uHookweb.bHook:=true;
+  //uDown.start(uConfig.webCache,fmain.Handle);
+  uDataDown.start(uConfig.webCache,fmain.Handle);
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);
@@ -945,4 +984,51 @@ begin
   end;
   result:=bmp;
 end;
+
+
+{
+  function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//组合url
+  procedure addDown();
+
+ procedure addDown();
+var
+  url,ServerName,ObjectName:string;
+  ServerPort:DWORD;
+begin
+  while iDown<uData.iData do
+  begin
+    ServerName:=uData.datas[iDown].ServerName;
+    ObjectName:=uData.datas[iDown].ObjectName;
+    ServerPort:=uData.datas[iDown].ServerPort;
+    url:=MergeUrl(ServerName,ObjectName,ServerPort);
+    iDown:=iDown+1;
+    if(url='')then continue;
+    uDown.addUrl(url);
+  end;
+
+end;
+function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//组合url
+var
+  protocol:string;
+begin
+  result:='';
+  if(servername='')or(serverport=0)then exit;
+  if(ObjectName[1]<>'/')then exit;
+  protocol:='http';
+  //if(ObjectName2[1]<>'/')then ObjectName2:='/'+ObjectName;
+  case ServerPort of
+  80:begin
+    result:=protocol+'://'+ServerName+ObjectName;
+  end;
+  443:begin
+    protocol:='https';
+    result:=protocol+'://'+ServerName+ObjectName;
+  end;
+  else begin
+    result:=protocol+'://'+ServerName+':'+inttostr(ServerPort)+ObjectName;
+  end;
+  end;
+end;
+
+}
 end.

@@ -14,7 +14,7 @@ const
   VER_G:string='vg.dat';
   VER_M:string='vm.dat';
   WEB_CACHE='cache';
-  LOG_NAME:string='ppLog.txt';
+  LOG_NAME:string='pp.txt';
 var
   workdir:string;//工作目录
   webdir,logfile:string;// 保存网页的子目录

@@ -630,25 +630,47 @@ object fMain: TfMain
     object tsAddFuncs: TTabSheet
       Caption = #38468#21152#21151#33021
       ImageIndex = 2
+      object edtExtFilename: TLabeledEdit
+        Left = 573
+        Top = 27
+        Width = 100
+        Height = 21
+        EditLabel.Width = 72
+        EditLabel.Height = 13
+        EditLabel.Caption = #25991#20214#21517#21518#32512#65306
+        TabOrder = 0
+        Text = '.png'
+      end
+      object edtRemotePath: TLabeledEdit
+        Left = 10
+        Top = 27
+        Width = 560
+        Height = 21
+        EditLabel.Width = 60
+        EditLabel.Height = 13
+        EditLabel.Caption = #36828#31243#36335#24452#65306
+        TabOrder = 1
+        Text = 'http://test.alltobid.com/moni/ver/'
+      end
+      object btnDownVerCode: TButton
+        Left = 688
+        Top = 24
+        Width = 75
+        Height = 25
+        Caption = #19979#36733' '
+        TabOrder = 2
+        OnClick = btnDownVerCodeClick
+      end
+      object btnSave: TButton
+        Left = 10
+        Top = 72
+        Width = 75
+        Height = 25
+        Caption = #20445#23384
+        TabOrder = 3
+        OnClick = btnSaveClick
+      end
     end
-  end
-  object edtVerAddr: TLabeledEdit
-    Left = 14
-    Top = 51
-    Width = 621
-    Height = 21
-    EditLabel.Width = 96
-    EditLabel.Height = 13
-    EditLabel.Caption = #22270#29255#39564#35777#30721#22320#22336#65306
-    TabOrder = 2
-  end
-  object btnDownVerCode: TButton
-    Left = 656
-    Top = 49
-    Width = 75
-    Height = 25
-    Caption = #19979#36733' '
-    TabOrder = 3
   end
   object Timer1: TTimer
     OnTimer = Timer1Timer

@@ -37,7 +37,7 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = tsAddFuncs
+    ActivePage = TabSheet1
     Align = alClient
     TabOrder = 1
     object TabSheet1: TTabSheet
@@ -574,7 +574,7 @@ object fMain: TfMain
           EditLabel.Height = 13
           EditLabel.Caption = #22269#25293#31995#32479#22320#22336
           TabOrder = 1
-          Text = 'https://paimai.alltobid.com'
+          Text = 'https://paimai2.alltobid.com '
         end
       end
       object btnVirtual: TButton
@@ -657,7 +657,7 @@ object fMain: TfMain
         Top = 24
         Width = 75
         Height = 25
-        Caption = #19979#36733' '
+        Caption = #19979#36733
         TabOrder = 2
         OnClick = btnDownVerCodeClick
       end

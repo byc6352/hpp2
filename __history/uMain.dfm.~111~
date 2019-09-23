@@ -11,6 +11,7 @@ object fMain: TfMain
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnClose = FormClose
   OnCreate = FormCreate
   OnShow = FormShow
   PixelsPerInch = 96
@@ -36,7 +37,7 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = TabSheet1
+    ActivePage = tsAddFuncs
     Align = alClient
     TabOrder = 1
     object TabSheet1: TTabSheet
@@ -626,6 +627,50 @@ object fMain: TfMain
         TabOrder = 0
       end
     end
+    object tsAddFuncs: TTabSheet
+      Caption = #38468#21152#21151#33021
+      ImageIndex = 2
+      object edtExtFilename: TLabeledEdit
+        Left = 573
+        Top = 27
+        Width = 100
+        Height = 21
+        EditLabel.Width = 72
+        EditLabel.Height = 13
+        EditLabel.Caption = #25991#20214#21517#21518#32512#65306
+        TabOrder = 0
+        Text = '.png'
+      end
+      object edtRemotePath: TLabeledEdit
+        Left = 10
+        Top = 27
+        Width = 560
+        Height = 21
+        EditLabel.Width = 60
+        EditLabel.Height = 13
+        EditLabel.Caption = #36828#31243#36335#24452#65306
+        TabOrder = 1
+        Text = 'http://test.alltobid.com/moni/ver/'
+      end
+      object btnDownVerCode: TButton
+        Left = 688
+        Top = 24
+        Width = 75
+        Height = 25
+        Caption = #19979#36733
+        TabOrder = 2
+        OnClick = btnDownVerCodeClick
+      end
+      object btnSave: TButton
+        Left = 10
+        Top = 72
+        Width = 75
+        Height = 25
+        Caption = #20445#23384
+        TabOrder = 3
+        OnClick = btnSaveClick
+      end
+    end
   end
   object Timer1: TTimer
     OnTimer = Timer1Timer
@@ -647,8 +692,8 @@ object fMain: TfMain
     Request.Ranges.Units = 'bytes'
     Request.Ranges = <>
     HTTPOptions = []
-    Left = 704
-    Top = 81
+    Left = 720
+    Top = 409
   end
   object IdSSLIOHandlerSocketOpenSSL1: TIdSSLIOHandlerSocketOpenSSL
     MaxLineAction = maException
@@ -659,8 +704,8 @@ object fMain: TfMain
     SSLOptions.Mode = sslmUnassigned
     SSLOptions.VerifyMode = []
     SSLOptions.VerifyDepth = 0
-    Left = 696
-    Top = 17
+    Left = 712
+    Top = 337
   end
   object Timer2: TTimer
     Enabled = False

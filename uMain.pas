@@ -145,11 +145,72 @@ var
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
   function initEndTime():string;
-
+function DownFileFromServer(const url,localFileName:string):boolean;
 implementation
 
 {$R *.dfm}
-
+function DownFileFromServer(const url,localFileName:string):boolean;
+var
+  ss: tstrings;
+  mm: TMemoryStream;
+  IdHTTP2:TIdHTTP;
+  IdSSLIOHandlerSocketOpenSSL2:TIdSSLIOHandlerSocketOpenSSL;
+function isUtf8():boolean;
+var
+  responseInfo,responseData:string;
+  //bUtf8,bText:boolean; //Content-Type: text
+begin
+  result:=false;
+  responseInfo:=idhttp2.Response.CharSet;
+  if(responseInfo<>'')then begin
+    responseInfo:=lowercase(responseInfo);
+    if(pos(lowercase('UTF-8'),responseInfo)>0)then begin result:=true;exit;end;
+  end;
+end;
+begin
+  result:=false;
+  ss:=nil;
+  IdSSLIOHandlerSocketOpenSSL2:=nil;
+  try
+    IdHTTP2 := TIdHTTP.create(nil);
+    mm:=TMemoryStream.Create;
+    if(pos(lowercase('https://'),lowercase(url))>0)then begin
+      IdSSLIOHandlerSocketOpenSSL2 := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+      IdHTTP2.IOHandler := IdSSLIOHandlerSocketOpenSSL2;
+    end;
+    //IdHTTP2.IOHandler:=nil else IdHTTP2.IOHandler:=dm.IdSSLIOHandlerSocketOpenSSL1;
+    IdHTTP2.HandleRedirects := True; //[hoInProcessAuth,hoKeepOrigProtocol,hoForceEncodeParams]
+  try
+    //if(pos('http://',url)>0)then idhttp1.IOHandler:=nil else idhttp1.IOHandler:=dm.IdSSLIOHandlerSocketOpenSSL1;
+    //IdHTTP1.HandleRedirects := True; //[hoInProcessAuth,hoKeepOrigProtocol,hoForceEncodeParams]
+    IdHTTP2.ReadTimeout:= 10*60*1000;
+    IdHTTP2.ConnectTimeout := 10*60*1000;
+    IdHTTP2.get(url,mm);
+    mm.Position:=0;
+    //IdHTTP1
+    if(isUtf8())then begin
+      ss:=tstringlist.Create;
+      ss.LoadFromStream(mm,TEncoding.UTF8);
+      ss.SaveToFile(localFileName,Tencoding.UTF8);
+    end else begin
+      mm.SaveToFile(localFileName);
+    end;
+    result:=true;
+    Log(format('IdHTTP2 down file suc:url: %s.   localFileName:%s.',[url,localFileName]));
+  except
+    on E: Exception do
+    begin
+      Log(format('IdHTTP2 down file fail: %s.raise by:%s.',[url,e.Message]));
+      //raise Exception.CreateFmt('IdHTTP1 down file fail: %s.raise by:%s.',[url,e.Message]);
+    end;
+  end;
+  finally
+    if(assigned(IdHTTP2))then IdHTTP2.Free;
+    if(assigned(ss))then ss.Free;
+    if(assigned(mm))then mm.Free;
+    if(assigned(IdSSLIOHandlerSocketOpenSSL2))then IdSSLIOHandlerSocketOpenSSL2.Free;
+  end;
+end;
 procedure TfMain.AppException(Sender: TObject; E: Exception);
 begin
   //Application.ShowException(E);
@@ -315,12 +376,18 @@ procedure TfMain.btnDownVerCodeClick(Sender: TObject);
 var
   remoteName,ExtFileName:string;
 begin
+  if(btnDownVerCode.Caption='œ¬‘ÿ')then begin
   remoteName:=trim(edtRemotePath.Text);
   ExtFileName:=trim(edtExtFileName.text);
   if(remoteName[length(remoteName)]<>'/')then
     uTryDown.tryDownloadFiles(remoteName)
   else
     uTryDown.tryDownloadFiles(remoteName,ExtFileName);
+    btnDownVerCode.Caption:='Õ£÷π';
+  end else begin
+    uTryDown.bDownFiles:=false;
+    btnDownVerCode.Caption:='œ¬‘ÿ';
+  end;
 end;
 
 procedure TfMain.btnFormSaveClick(Sender: TObject);

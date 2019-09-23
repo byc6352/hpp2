@@ -30,7 +30,7 @@ begin
     remotefile:=remotePath+filename;
     localfile:=localpath+filename;
     if(DownFileFromServer(remotefile,localfile))then begin
-    //if(DownloadToFile(remotefile,localfile))then begin
+    if(DownloadToFile(remotefile,localfile))then begin
       PostMessage(mForm, WM_DOWN_FILE,2,i);
     end;
   end;
