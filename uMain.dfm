@@ -37,7 +37,7 @@ object fMain: TfMain
     Top = 0
     Width = 784
     Height = 743
-    ActivePage = TabSheet1
+    ActivePage = tsAddFuncs
     Align = alClient
     TabOrder = 1
     object TabSheet1: TTabSheet
@@ -557,7 +557,7 @@ object fMain: TfMain
         object edtVirtualSysAddr: TLabeledEdit
           Left = 2
           Top = 30
-          Width = 503
+          Width = 517
           Height = 21
           EditLabel.Width = 72
           EditLabel.Height = 13
@@ -568,13 +568,25 @@ object fMain: TfMain
         object edtGPsysAddr: TLabeledEdit
           Left = 4
           Top = 78
-          Width = 725
+          Width = 366
           Height = 21
           EditLabel.Width = 72
           EditLabel.Height = 13
           EditLabel.Caption = #22269#25293#31995#32479#22320#22336
           TabOrder = 1
           Text = 'https://paimai2.alltobid.com '
+        end
+        object cmbSelSys: TComboBox
+          Left = 376
+          Top = 78
+          Width = 145
+          Height = 21
+          TabOrder = 2
+          Text = 'https://paimai2.alltobid.com '
+          OnChange = cmbSelSysChange
+          Items.Strings = (
+            'https://paimai2.alltobid.com'
+            'http://154.221.19.215/bid/login.htm')
         end
       end
       object btnVirtual: TButton
@@ -662,13 +674,126 @@ object fMain: TfMain
         OnClick = btnDownVerCodeClick
       end
       object btnSave: TButton
-        Left = 10
+        Left = 8
         Top = 72
         Width = 75
         Height = 25
         Caption = #20445#23384
         TabOrder = 3
         OnClick = btnSaveClick
+      end
+      object GroupBox7: TGroupBox
+        Left = 0
+        Top = 552
+        Width = 776
+        Height = 163
+        Align = alBottom
+        Caption = #20215#26684#20462#25913
+        TabOrder = 4
+        object rbtnUpdateNo: TRadioButton
+          Left = 14
+          Top = 24
+          Width = 65
+          Height = 17
+          Caption = #19981#20462#25913
+          TabOrder = 0
+        end
+        object rbtnUpdateOKandRequestPrice: TRadioButton
+          Left = 191
+          Top = 24
+          Width = 162
+          Height = 17
+          Caption = #20462#25913#25552#20132#20215#26684#19982#30003#35831#20215#26684
+          TabOrder = 1
+        end
+        object rbtnUpdateOKPrice: TRadioButton
+          Left = 85
+          Top = 24
+          Width = 100
+          Height = 17
+          Caption = #20462#25913#25552#20132#20215#26684
+          Checked = True
+          TabOrder = 2
+          TabStop = True
+        end
+        object edtClientId: TLabeledEdit
+          Left = 144
+          Top = 72
+          Width = 251
+          Height = 21
+          EditLabel.Width = 39
+          EditLabel.Height = 13
+          EditLabel.Caption = 'clientId:'
+          TabOrder = 3
+        end
+        object edtPriceCode: TLabeledEdit
+          Left = 407
+          Top = 72
+          Width = 76
+          Height = 21
+          EditLabel.Width = 52
+          EditLabel.Height = 13
+          EditLabel.Caption = 'priceCode:'
+          TabOrder = 4
+        end
+        object edtBidnumber: TLabeledEdit
+          Left = 8
+          Top = 72
+          Width = 128
+          Height = 21
+          EditLabel.Width = 54
+          EditLabel.Height = 13
+          EditLabel.Caption = 'bidnumber:'
+          TabOrder = 5
+        end
+        object edtCurPrice: TLabeledEdit
+          Left = 499
+          Top = 71
+          Width = 100
+          Height = 21
+          EditLabel.Width = 88
+          EditLabel.Height = 13
+          EditLabel.Caption = #24403#21069#26368#20302#25104#20132#20215':'
+          TabOrder = 6
+        end
+        object edtHostIP: TLabeledEdit
+          Left = 8
+          Top = 113
+          Width = 128
+          Height = 21
+          EditLabel.Width = 64
+          EditLabel.Height = 13
+          EditLabel.Caption = #26381#21153#22120#22320#22336':'
+          TabOrder = 7
+        end
+        object edtHostPort: TLabeledEdit
+          Left = 144
+          Top = 113
+          Width = 128
+          Height = 21
+          EditLabel.Width = 72
+          EditLabel.Height = 13
+          EditLabel.Caption = #26381#21153#22120#31471#21475#65306
+          TabOrder = 8
+        end
+      end
+      object btnSetSysTime: TButton
+        Left = 117
+        Top = 72
+        Width = 100
+        Height = 25
+        Caption = #35774#32622#31995#32479#26102#38388
+        TabOrder = 5
+        OnClick = btnSetSysTimeClick
+      end
+      object btnRestoreSysTime: TButton
+        Left = 244
+        Top = 72
+        Width = 100
+        Height = 25
+        Caption = #24674#22797' '#31995#32479#26102#38388
+        TabOrder = 6
+        OnClick = btnRestoreSysTimeClick
       end
     end
   end

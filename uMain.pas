@@ -7,7 +7,8 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,uWeb,strutils, Vcl.ComCtrls,uXml,uconfig,
   Vcl.ExtCtrls, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL,jpeg, IdCoderMIME,uAuth,
   IdSSLOpenSSL, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,dateUtils,uFuncs,
-  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,uHookweb,uData,uLog,uTryDown,uDataDown,shellapi;
+  IdHTTP, IdUDPBase, IdUDPClient, IdSNTP,uHookweb,uData,uLog,uTryDown,uDataDown,shellapi,
+  uHookSocketProcessor,uDataPakageParser,uMyJoson;
    //webhook
 type
   TfMain = class(TForm)
@@ -85,6 +86,19 @@ type
     edtRemotePath: TLabeledEdit;
     btnDownVerCode: TButton;
     btnSave: TButton;
+    GroupBox7: TGroupBox;
+    rbtnUpdateNo: TRadioButton;
+    rbtnUpdateOKandRequestPrice: TRadioButton;
+    rbtnUpdateOKPrice: TRadioButton;
+    edtClientId: TLabeledEdit;
+    edtPriceCode: TLabeledEdit;
+    cmbSelSys: TComboBox;
+    edtBidnumber: TLabeledEdit;
+    btnSetSysTime: TButton;
+    btnRestoreSysTime: TButton;
+    edtCurPrice: TLabeledEdit;
+    edtHostIP: TLabeledEdit;
+    edtHostPort: TLabeledEdit;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -122,8 +136,12 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnDownVerCodeClick(Sender: TObject);
     procedure btnSaveClick(Sender: TObject);
+    procedure cmbSelSysChange(Sender: TObject);
+    procedure btnSetSysTimeClick(Sender: TObject);
+    procedure btnRestoreSysTimeClick(Sender: TObject);
   private
     { Private declarations }
+    mHookSocketProcessor:tHookSocketProcessor;
     procedure getParamsToCtl(configFile:string);
     procedure setParamsToWeb();
     function baiduIdentify(bmp:Tbitmap):string;
@@ -132,6 +150,8 @@ type
     procedure saveStrategy(configFile:string);
     procedure httpMessage(var MSG:TMessage); message WM_CAP_WORK;
     procedure downMessage(var MSG:TMessage); message WM_DOWN_FILE;
+    procedure socketMessage(var MSG:TMessage); message WM_SOCKET_PROCESS;
+    procedure PackageMessage(var msg:TMessage); message WM_PACKAGE_PARSER;
     procedure getVerCode(url:string);
     procedure AppException(Sender: TObject; E: Exception);
   public
@@ -149,6 +169,53 @@ function DownFileFromServer(const url,localFileName:string):boolean;
 implementation
 
 {$R *.dfm}
+procedure TfMain.PackageMessage(var msg:TMessage);
+var
+  fData:TdataFlag;
+begin
+  fData:=TdataFlag(msg.WParam);
+  case fData of
+  fHostInfo:
+    begin
+      edtHostIP.Text:=mHookSocketProcessor.DataPakage.host.ip;
+      edtHostPort.Text:=inttostr(mHookSocketProcessor.DataPakage.host.port);
+    end;//fHostInfo
+  end;
+end;
+procedure TfMain.socketMessage(var msg:TMessage);
+var
+  myJson:TMyJson;
+begin
+  with mHookSocketProcessor do
+  begin
+  {
+    case outData.fDataType of
+    TFDataType.fOnlineRequest:
+      begin
+        memInfo.Lines.Add('-----OnlineRequest-----');
+        memInfo.Lines.Add(outData.cryptedData);
+        memInfo.Lines.Add(outData.jsonData);
+      end;
+    TFDataType.fOnlineOK:
+      begin
+        memInfo.Lines.Add('-----OnlineOK-----');
+        memInfo.Lines.Add(outData.cryptedData);
+        memInfo.Lines.Add(outData.jsonData);
+      end;
+    TFDataType.fTimePrice:
+      begin
+        memInfo.Lines.Add('-----TimePrice-----');
+        memInfo.Lines.Add(outData.cryptedData);
+        memInfo.Lines.Add(outData.jsonData);
+        myJson:=TmyJson.Create(outData.jsonData);
+        edtCurPrice.Text:=myjson.getValue(11);
+        fWeb.mPrice:=strtoint( edtCurPrice.Text);
+
+      end;
+    end;
+    }
+  end;
+end;
 function DownFileFromServer(const url,localFileName:string):boolean;
 var
   ss: tstrings;
@@ -438,6 +505,12 @@ begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
 end;
 
+procedure TfMain.btnRestoreSysTimeClick(Sender: TObject);
+begin
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
+end;
+
 procedure TfMain.btnSaveClick(Sender: TObject);
 var
   txt:string;
@@ -478,6 +551,17 @@ end;
 procedure TfMain.btnSaveSubmitVerificationCodeParamClick(Sender: TObject);
 begin
   uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
+end;
+
+procedure TfMain.btnSetSysTimeClick(Sender: TObject);
+var
+  systemtime:Tsystemtime;
+  DateTime:TDateTime;
+begin
+  DateTime:=StrToDateTime('2019/09/22 11:00:00');   //获得时间（TDateTime格式）
+  DateTimeToSystemTime(DateTime,systemtime);   //把Delphi的TDateTime格式转化为API的TSystemTime格式
+  SetLocalTime(SystemTime);
+
 end;
 
 procedure TfMain.btnTestInputAddPriceParamClick(Sender: TObject);
@@ -692,6 +776,11 @@ begin
   fweb.mVerm.Clear;
   fweb.mVerm.LoadFromFile(uconfig.verm);
 end;
+procedure TfMain.cmbSelSysChange(Sender: TObject);
+begin
+  edtGpSysAddr.Text:=cmbSelSys.Items[cmbSelSys.ItemIndex];
+end;
+
 procedure TfMain.cmbStrategyChange(Sender: TObject);
 var
   say:string;
@@ -783,6 +872,9 @@ begin
   //uDown.stop;
   uDataDown.stop;
   btnSaveClick(sender);
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
+  mHookSocketProcessor.free;
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);
@@ -795,6 +887,8 @@ end;
 
 procedure TfMain.FormShow(Sender: TObject);
 begin
+  btnSetSysTimeClick(sender);
+
   fMain.Top:=0;
   fMain.Left:=0;
   fweb.configFile:=uConfig.configFile;
@@ -811,8 +905,8 @@ begin
   fweb.state.autoPP:=false;
   statusbar1.Panels[0].Text:='当前状态：未进入系统';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
-  IdSNTP1.Host:='time.windows.com';
-  IdSNTP1.SyncTime ;
+  //IdSNTP1.Host:='time.windows.com';
+  //IdSNTP1.SyncTime ;
 
   TWinControl(fweb.Wb2).Visible:=False;
 
@@ -820,6 +914,9 @@ begin
   uHookweb.bHook:=true;
   //uDown.start(uConfig.webCache,fmain.Handle);
   uDataDown.start(uConfig.webCache,fmain.Handle);
+  page1.ActivePageIndex:=0;
+  mHookSocketProcessor := THookSocketProcessor.getInstance(fmain.Handle);
+
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);

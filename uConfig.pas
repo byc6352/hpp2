@@ -6,6 +6,8 @@ uses
 const
   WORK_DIR:string='pp'; // 工作目录
   WEB_DIR:string='web'; // 保存网页的子目录名
+  WEB_CACHE='cache';
+  DATA_DIR:string='data'; // 保存数据的目录
   XML_FILE:string='config.xml';//xml配置参数文件
   XML_FILE_G:string='configg.xml';//xml配置参数文件
   BAIDU_APP_ID:string='16197183';
@@ -13,12 +15,13 @@ const
   BAIDU_SECRET_KEY:string='ceAs9I9xHUzrxs0OWfEBed2HnA4CerLS';
   VER_G:string='vg.dat';
   VER_M:string='vm.dat';
-  WEB_CACHE='cache';
   LOG_NAME:string='ppLog.txt';
+  SWF_NAME:ansiString='crypt.swf';        //flash文件
+  SOCKET_NAME:ansiString='socket.dat'; //socket数据文件
 var
-  workdir:string;//工作目录
-  webdir,logfile:string;// 保存网页的子目录
-  configFile,configFile2,verg,verm,webCache:string;//xml配置参数文件
+  workdir,webdir,datadir:string;// 工作目录,保存网页的子目录
+  configFile,configFile2,verg,verm,webCache,socketFile,flashfile,logfile:string;//xml配置参数文件
+
   isInit:boolean=false;
   procedure init();
 implementation
@@ -36,12 +39,16 @@ begin
   if(not DirectoryExists(webdir))then ForceDirectories(webdir);
   webCache:=webdir+'\'+WEB_CACHE;
   if(not directoryexists(webCache))then forcedirectories(webCache);
+  datadir:=workdir+'\'+DATA_DIR;
+  if(not directoryexists(datadir))then forcedirectories(datadir);
   configFile:=workdir+'\'+XML_FILE;
   configFile2:=workdir+'\'+XML_FILE_G;
   verg:=workdir+'\'+VER_G;
   verm:=workdir+'\'+VER_M;
   if(not fileexists(configFile))then uxml.createXml;
-  logfile:=workdir+'\'+LOG_NAME;
+  logfile:=datadir+'\'+LOG_NAME;
+  socketFile:=datadir+'\'+SOCKET_NAME;
+  flashfile:= workdir+'\'+SWF_NAME;
 end;
 begin
   init();

@@ -1,0 +1,190 @@
+unit uDataPakageParser;
+
+interface
+uses
+  windows,classes,winsock2,sysutils,strutils,uFlash,messages;
+
+const
+  WM_PACKAGE_PARSER = WM_USER+1004;               //数据包解析消息
+  PACKAGE_DATA_MAX_SIZE=2048;                    //定义包内数据大小 ；
+  PACKAGE_LINK_MAX_COUNT=16;                    //定义粘包最大数量 ；
+type
+  TDataFlag=(fHostInfo,fOnlineRequest,fOnlineOK,fTimePrice);    //数据标识：fTimePrice:实时价格数据
+  TMergeFlag=(fbuzy,fNone,fHeader,fComplete);               //组合包处理标志：忙，无包，包头，整包；
+  //--------------------------------------业务逻辑 包头----------------------------------------
+  PPackageHeader=^stPackageHeader;
+  stPackageHeader=packed record
+    dwSize:DWORD;
+    header:array[0..11] of byte;
+    ordHigh:byte;
+    ordLow:byte;
+    dwDataSize:DWORD;
+  end;
+  stDataPackage=packed record                              //包
+    header:stPackageHeader;
+    data:array[0..PACKAGE_DATA_MAX_SIZE-1] of byte;
+    pBigData:pointer;
+  end;
+  stHostInfo=record                       //服务器连接信息；
+    s:TSocket;                            //保存旧连接信息
+    ip:ansiString;
+    port:WORD;
+  end;
+  //-------------------------------------------------------------------------------------------
+  TDataPackageParser = class(TThread)                      //包解析类
+  private
+    bProcess:BOOLEAN;                                   //线程运行控制
+    mCount:integer;                                       //数据包的数量；
+    mDataPackageArr:array[0..PACKAGE_LINK_MAX_COUNT-1] of  stDataPackage;    //数据包；
+    mHeaderSize:DWORD;                                     //包头大小 ；
+    mFMerge:TMergeFlag;                                     //组合包处理结果；
+    mhForm:HWND;
+    mFlash:tFlash;
+    mfData:TDataFlag;                                     //数据类型
+    cryptedData:ansiString;                               //加密的数据；
+    jsonData:ansiString;                                //json数据；
+    pByteData:pointer;                                  //二进制数据；
+    mHostInfo:stHostInfo;                           //host连接信息；
+    function convertInt(i:integer):integer;
+    function VerifyPackage(pHeader:PPackageHeader;dataSize:DWORD):boolean;           //数据包校验；
+
+    //procedure CopyData();
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(hForm:HWND); overload;
+    destructor Destroy;
+    procedure MergePackage(dataDirection,dataSize: DWORD;pData:pointer);
+    procedure inputData(s: TSocket;dataDirection,dataSize: DWORD;pData:pointer);
+    procedure CaptrueHostInfo(ip:ansiString;port:word); //捕获服务器地址，端口；
+    function isMyHost(ip:ansiString;port:word):boolean; //判断是否是pp服务器数据包
+    property Host:stHostInfo read mHostInfo;
+  end;
+
+implementation
+uses
+  uHookSocketProcessor,uConfig,uFuncs;
+
+constructor TDataPackageParser.Create(hForm:HWND);
+begin
+  inherited Create(false);
+  bProcess:=true;                                              //程序开始时启动线程，直到程序结束；
+  mFlash:=tFlash.Create(uConfig.flashfile);
+  mhForm:=hForm;
+  mHeaderSize:=sizeof(stPackageHeader);
+  //zeromemory(@mDataPackageArr[0].header,sizeof(stDataPackage)*length(mDataPackageArr));
+end;
+destructor TDataPackageParser.Destroy;
+begin
+  bProcess:=false;
+  mFlash.free;
+end;
+
+procedure TDataPackageParser.Execute;
+var
+  s:TSocket;
+begin
+  while bProcess do
+  begin
+    //if
+  end;
+end;
+procedure TDataPackageParser.MergePackage(dataDirection,dataSize: DWORD;pData:pointer);
+var
+  PHeader:PPackageHeader;
+begin
+  if mFMerge=fHeader then                 //可能接收到包体
+  begin
+    mFMerge:=fNone;
+    if not VerifyPackage(@mDataPackageArr[mCount].header,dataSize) then exit;
+    copymemory(@mDataPackageArr[mCount].data[0],pData,dataSize);
+
+  end
+  else begin //有包头存在
+    mFMerge:=fNone;
+    if(dataSize<mHeaderSize)then exit else
+    if(dataSize=mHeaderSize)then                 //接收到包头
+    begin
+      //if not VerifyPackage(PPackageHeader(pData),dataSize) then exit;          //校验包头；
+      copymemory(@mDataPackageArr[mCount].header,pData,mHeaderSize);
+      with mDataPackageArr[mCount].header do
+      begin
+        dwSize:=convertInt(dwSize);
+        dwDataSize:=convertInt(dwDataSize);
+      end;
+      mFMerge:=fHeader;
+      exit;
+    end else
+    if(dataSize>mHeaderSize)then                  //整包；
+    begin
+      if not VerifyPackage(PPackageHeader(pData),dataSize) then exit;
+      copymemory(@mDataPackageArr[mCount],pData,dataSize);
+      with mDataPackageArr[mCount].header do
+      begin
+        dwSize:=convertInt(dwSize);
+        dwDataSize:=convertInt(dwDataSize);
+        if(dwSize<>dataSize)then exit;
+        if(dwDataSize<>dataSize-mHeaderSize)then exit;
+      end;
+      mCount:=mCount+1;
+      mFMerge:=fComplete;
+    end;
+  end;
+
+end;
+//数据入口；
+procedure TDataPackageParser.inputData(s: TSocket;dataDirection,dataSize: DWORD;pData:pointer);
+begin
+
+end;
+procedure TDataPackageParser.CaptrueHostInfo(ip:ansiString;port:word); //捕获服务器地址，端口；
+begin
+  if(port=443)then
+  begin
+    mHostInfo.ip:=ip;
+    mHostInfo.Port:=0;
+    exit;
+  end;
+  if(mHostInfo.Port=0)and(port<>443)and(ip=mHostInfo.ip)then
+  begin
+    mHostInfo.port:=port;
+    mfData:=TDataFlag.fHostInfo;
+    postMessage(mhform, WM_PACKAGE_PARSER,cardinal(TDataFlag.fHostInfo),0);
+  end;
+end;
+function TDataPackageParser.isMyHost(ip:ansiString;port:word):boolean;
+begin
+  result:=false;
+  if(ip<>mHostInfo.ip)then exit;
+  if(port<>mHostInfo.port)then exit;
+end;
+
+function TDataPackageParser.VerifyPackage(pHeader:PPackageHeader;dataSize:DWORD):boolean;           //数据包校验；
+var
+  dwSize,dwDataSize:DWORD;
+begin
+  result:=false;
+  dwSize:=pHeader^.dwSize;
+  dwDataSize:=pHeader^.dwDataSize;
+  dwSize:=convertInt(dwSize);
+  dwDataSize:=convertInt(dwDataSize);
+  if(dwSize<>dataSize+mHeaderSize)then exit;
+  if(dwDataSize<>dataSize)then exit;
+  result:=true;
+end;
+//-----------------------------------------内部功能---------------------------------------------
+function TDataPackageParser.convertInt(i:integer):integer;
+var
+  b1,b2:array[0..3] of byte;
+begin
+  move(i,b1,4);
+  b2[0]:=b1[3];
+  b2[1]:=b1[2];
+  b2[2]:=b1[1];
+  b2[3]:=b1[0];
+  move(b2,result,4);
+end;
+initialization
+
+finalization
+end.

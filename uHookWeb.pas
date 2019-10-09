@@ -55,6 +55,9 @@ var
   //InternetCloseHandle
   original_InternetCloseHandle:function(hInet: HINTERNET): BOOL; stdcall;
 
+
+
+
   function replaced_InternetOpenUrlW(hInet: HINTERNET; lpszUrl: LPWSTR;lpszHeaders: LPWSTR; dwHeadersLength: DWORD; dwFlags: DWORD;dwContext: DWORD_PTR): HINTERNET; stdcall;
   //HttpOpenRequestW
   function replaced_HttpOpenRequestW(hConnect: HINTERNET; lpszVerb: LPWSTR;
@@ -94,6 +97,9 @@ var
   //InternetCloseHandle
   function replaced_InternetCloseHandle(hInet: HINTERNET): BOOL; stdcall;
 
+  function replaced_Send(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
+  function replaced_Recv(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
+
   procedure UnHookWebAPI;
   procedure HookWebAPI;
 var
@@ -101,7 +107,43 @@ var
   bHook:boolean;
 implementation
 uses
-  HookUtils,uDataDown,uLog;
+  HookUtils,uDataDown,uDataSocket,uLog,uHookSocketProcessor;
+
+function replaced_Send(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
+var
+  p:pansiChar;
+  pb:PByte;
+begin
+  //这儿进行接收的数据处理
+  //setlength(gSend,len);
+  //move(buf,gSend[1],len);
+
+  result:=original_Send(s,buf,len,flags);
+  if(result<1)then exit;
+  THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_SEND);
+  //SaveSocketDataToFile('send',s,Buf,result);
+  //if(result<26)then exit;
+  //p:=pointer(integer(@Buf)+22);
+  //gData:=p;
+  //postMessage(hform, WM_CAP_WORK,len,0);
+  //MessageBeep(1000); //简单的响一声
+end;
+
+function replaced_Recv(s: TSocket; var Buf; len, flags: Integer): Integer; stdcall;
+var
+  p:pansiChar;
+begin
+
+  result:=original_Recv(s,buf,len,flags);
+  if(result<1)then exit;
+  THookSocketProcessor.getInstance().addSocketData(s,Buf,result,uHookSocketProcessor.DATA_DIRECTION_RECV);
+  //SaveSocketDataToFile('Recv',s,Buf,result);
+  //p:=pointer(integer(@Buf)+22);
+  //gData:=p;
+  //postMessage(hform, WM_CAP_WORK,len,1);
+  //MessageBeep(10000); //简单的响一声
+end;
+
   //InternetCloseHandle
 function replaced_InternetCloseHandle(hInet: HINTERNET): BOOL; stdcall;
 begin
@@ -354,6 +396,15 @@ begin
   begin
     @original_InternetCloseHandle:= HookProcInModule('wininet.dll', 'InternetCloseHandle', @replaced_InternetCloseHandle);
   end;
+
+  if not(Assigned(original_Send)) then
+  begin
+    @original_Send := HookProcInModule('ws2_32.dll', 'send', @replaced_Send); //ws2_32  wsock32
+  end;
+  if not(Assigned(original_Recv)) then
+  begin
+    @original_Recv := HookProcInModule('ws2_32.dll', 'recv', @replaced_Recv);
+  end;
 end;
 {------------------------------------}
 {过程功能:取消HOOKAPI
@@ -390,6 +441,11 @@ begin
   //InternetCloseHandle
   if Assigned(original_InternetCloseHandle) then
     UnHook(@original_InternetCloseHandle);
+
+  if Assigned(original_Send) then
+    UnHook(@original_Send);
+  if Assigned(original_Recv) then
+    UnHook(@original_Recv);
 end;
 
 

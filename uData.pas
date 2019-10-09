@@ -123,7 +123,7 @@ begin
     ss.Add('');
     ss.Add('');
   end;
-  result:=getFileName(uConfig.workdir,'header','.txt');
+  result:=getFileName(uConfig.datadir,'header','.txt');
   ss.SaveToFile(result);
   ss.Free;
 end;
@@ -194,7 +194,7 @@ begin
     s:=stime+verb+Servername+sPort+ObjectName+len+dataLen+qData+rData;
     ss.Add(s);
   end;
-  result:=getFileName(uConfig.workdir,'all','.txt');
+  result:=getFileName(uConfig.datadir,'all','.txt');
   ss.SaveToFile(result);
   ss.Free;
 end;

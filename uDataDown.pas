@@ -49,7 +49,7 @@ begin
 end;
 procedure SaveFile(wFile: DWORD; lpBuffer: Pointer;lpdwNumberOfBytesRead: DWORD);
 var
-  localFileName,ServerName,ObjectName:string;
+  localFileName,ServerName,ObjectName,rHeader:string;
   ServerPort:DWORD;
   lpNumberOfBytesWritten:DWORD;
   ret:BOOL;
@@ -62,6 +62,8 @@ begin
     ServerPort:=uData.datas[idata-1].ServerPort;
     localFileName:=url2file(ServerName,ObjectName,ServerPort);
     if(localFileName='')then exit;
+    rHeader:=uData.datas[idata-1].rHeader;
+    if(pos('json',rHeader)>0)then  localFileName:=localFileName+'.json';
     if(fileexists(localFileName))then exit;
     if(hLocalFile<>0)then myCloseFileHandle(hLocalFile);
     uData.datas[idata-1].rData:=localFilename;

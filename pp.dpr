@@ -8,7 +8,11 @@ uses
   uConfig in 'uConfig.pas',
   uXml in 'uXml.pas',
   uAuth in 'uAuth.pas',
-  uTryDown in 'uTryDown.pas';
+  uTryDown in 'uTryDown.pas',
+  uDataSocket in 'uDataSocket.pas',
+  uHookSocketProcessor in 'uHookSocketProcessor.pas',
+  uMyJoson in 'uMyJoson.pas',
+  uDataPakageParser in 'uDataPakageParser.pas';
 
 {$R *.res}
 
