@@ -102,6 +102,10 @@ type
     lbImageMsg: TLabel;
     imgYzCode: TImage;
     btnRestartpackageParser: TButton;
+    btnTest: TButton;
+    btnRecordScreen: TButton;
+    edtVideoTimeLength: TLabeledEdit;
+    edtRequestData: TLabeledEdit;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -144,6 +148,8 @@ type
     procedure btnRestoreSysTimeClick(Sender: TObject);
     procedure btnRestartpackageParserClick(Sender: TObject);
     procedure rbtnUpdateNoClick(Sender: TObject);
+    procedure btnTestClick(Sender: TObject);
+    procedure btnRecordScreenClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -160,6 +166,8 @@ type
     procedure getVerCode(url:string);
     procedure AppException(Sender: TObject; E: Exception);
     procedure showYzcodePng(pData:pointer;dwSize:DWORD);
+    procedure backupFlashLog();
+    procedure setMMcfg();
   public
     { Public declarations }
     mHookSocketProcessor:tHookSocketProcessor;
@@ -176,7 +184,31 @@ implementation
 
 {$R *.dfm}
 uses
-  json;
+  json,ShlObj,uFlash;
+procedure TfMain.setMMcfg();
+var
+  userdir,mmcfgFileName:String;
+begin
+  if(not fileExists(uConfig.mmcfgFile))then exit;
+  userdir:=GetSystemPath(CSIDL_PROFILE);
+  mmcfgFileName:=userdir+'\'+uConfig.MMCFG_NAME;
+  if(not fileExists(mmcfgFileName))then
+  begin
+    copyFile(pchar(uConfig.mmcfgFile),pchar(mmcfgFileName),true);
+  end;
+end;
+procedure TfMain.backupFlashLog();
+var
+  logFile,newFile:String;
+begin
+  logFile:=GetEnvironmentVariable('APPDATA');
+  logFile:=logFile+'\Macromedia\Flash Player\Logs\flashlog.txt';
+  newFile:=uFuncs.getFilename(uConfig.datadir,'flashlog','.txt');
+  if(fileExists(logFile))then
+  begin
+    copyfile(pchar(logFile),pchar(newFile),false);
+  end;
+end;
 procedure TfMain.PackageMessage(var msg:TMessage);
 var
   DataFlag:TdataFlag;
@@ -218,6 +250,7 @@ try
       memInfo.Lines.Add('-----fYzCodeRequest-----');
       memInfo.Lines.Add(pOut^.cryptedData);
       memInfo.Lines.Add(pOut^.jsonData);
+      edtRequestData.Text:=mHookSocketProcessor.DataPackage.Requestdata;
     end;
   fImageMsgOK:
     begin
@@ -598,6 +631,19 @@ begin
   fweb.rctPrice:=getRectFromStr(edtPrice.text);
 end;
 
+procedure TfMain.btnRecordScreenClick(Sender: TObject);
+var
+  cmd,mp4,recordTime:String;
+begin
+  mp4:=uFuncs.getFilename(uConfig.datadir,'video','.mp4');
+  recordTime:=trim(edtvideoTimeLength.Text);
+  recordTime:=inttostr(strtoint(recordTime)*60);
+  //cmd:='ffmpeg -y -f gdigrab  -t 3600 -r 25 -i desktop -vcodec libx264 -s 1920x1080 123.mp4';
+  //cmd:=uConfig.ffmpegFile+' -y -f gdigrab  -t '+recordTime+' -r 25 -i desktop -vcodec libx264 -s 1920x1080 '+mp4;
+  cmd:=' -y -f gdigrab  -t '+recordTime+' -r 25 -i desktop -vcodec libx264 -s 1920x1080 '+mp4;
+  ShellExecute(Handle,'open',pchar(uConfig.ffmpegFile),pchar(cmd),nil,1);
+end;
+
 procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
 begin
   mHookSocketProcessor.restartPackageParser(fmain.Handle);
@@ -660,6 +706,21 @@ begin
   DateTimeToSystemTime(DateTime,systemtime);   //把Delphi的TDateTime格式转化为API的TSystemTime格式
   SetLocalTime(SystemTime);
 
+end;
+
+procedure TfMain.btnTestClick(Sender: TObject);
+var
+  flash:tFlash;
+  s:string;
+begin
+  s:='JjoEfeJWMBRcHXr6LWkrNXbRdpfiywDXQQfsbmOvYv+bzCosM368a7BywOluoQWs/ty0JfXXsVst9cE83MAxOM+'+
+  'JGndpC2EL8nwoAOlkSIKunSWbm4zsT3phGlT3nt0JI2Bo58QN0xnnJKa+Kb+BxCFqA17jNhWdCfczeoBVgUmDdiS1DGkRrr'+
+  'bwikIqQQ9Qzz+L/0HADhMRNmo2UwVePsPEV0iJaZdlvwa+8jMCF3PGfaDfx6HNycs43SCNKyzyk6lNhgo1Z1Ay9HRD9e16Y'+
+  'y5P3efCOKM9VUntQiaEuy6ruk3czyrwQGp31sABVZyiD7PHsVpeLrk/dhW3DZDupbB+RGaUmDl2ZLJwcr5UcwQanftfdMYq'+
+  'vBA5IKlXRfL+Z2MbZgjwOrw/yosEXIL6jWVRRA29kajxSz3W9m8cfzYr0XrKg080Xw==';
+  flash:=tFlash.create;
+  ShowMessage(flash.getPriceCode(s));
+//ShowMessage(GetEnvironmentVariable('APPDATA'));
 end;
 
 procedure TfMain.btnTestInputAddPriceParamClick(Sender: TObject);
@@ -968,11 +1029,13 @@ end;
 procedure TfMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   //uDown.stop;
+  backupFlashLog();
   uDataDown.stop;
   btnSaveClick(sender);
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
-  mHookSocketProcessor.free;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
+  //mHookSocketProcessor.Suspend();
+  //mHookSocketProcessor.free;
 end;
 
 procedure TfMain.FormCreate(Sender: TObject);
@@ -1014,7 +1077,7 @@ begin
   uDataDown.start(uConfig.webCache,fmain.Handle);
   page1.ActivePageIndex:=0;
   mHookSocketProcessor := THookSocketProcessor.getInstance(fmain.Handle);
-
+  setMMcfg();
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);

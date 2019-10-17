@@ -18,7 +18,6 @@ type
     function cryptData(const data:ansistring):ansistring;
     function CryptTimeData(const data:ansistring):ansistring;
     function deCryptTimeData(const data:ansistring):ansistring;
-    function getPriceCode(const data:ansistring):ansistring;
   end;
 
 implementation
@@ -27,8 +26,6 @@ constructor TFlash.Create(swfFileName : ansiString);
 begin
   if not assigned(swf) then begin
     swf:=TShockwaveFlash.Create(nil);
-    swf.AllowScriptAccess:='always';
-    swf.AllowNetworking:='all';
     swf.Movie:=swfFileName;
   end;
 end;
@@ -39,18 +36,6 @@ begin
     swf.Free;
     swf:=nil;
   end;
-end;
-function TFlash.getPriceCode(const data:ansistring):ansistring;
-var
-  tmp: WideString;
-  Response:ansiString;
-begin
-  tmp := EncodeData('getPriceCode', [data]);
-  tmp:=swf.CallFunction(tmp);
-  Response:=tmp;  //<string></string>
-  Response:=midstr(Response,9,length(Response)-17);
-  Response:=replaceStr(Response,'&quot;','"');
-  result:=Response;
 end;
 function TFlash.replaceRequest(const priceData,oldData,clientId:ansistring):ansistring;
 var

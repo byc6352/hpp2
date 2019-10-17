@@ -2,8 +2,7 @@ unit uFuncs;
 
 interface
 uses
-   System.SysUtils,messages,windows, Vcl.Graphics,system.classes,strutils,uconfig,registry,urlmon,
-   ShlObj;
+   System.SysUtils,messages,windows, Vcl.Graphics,system.classes,strutils,uconfig,registry,urlmon;
 
 function getDateFilename():string;
 function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
@@ -29,19 +28,8 @@ function url2file(ServerName,ObjectName:string;ServerPort:DWORD):string;overload
 function url2file(ServerName,ObjectName:string;ServerPort:DWORD;var url:string):string;overload;
 function url2file(url:string):string;overload;
 function DownloadToFile(Source, Dest: string): Boolean;
-function GetSystemPath(FID: Integer): string;
 implementation
 
-//uses ShlObj
-function GetSystemPath(FID: Integer): string;
-var
-  pidl: PItemIDList;
-  path: array[0..MAX_PATH] of Char;
-begin
-  SHGetSpecialFolderLocation(0, FID, pidl);
-  SHGetPathFromIDList(pidl, path);
-  Result := path;
-end;
 function DownloadToFile(Source, Dest: string): Boolean;
 begin
   try

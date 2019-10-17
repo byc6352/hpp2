@@ -55,7 +55,7 @@ begin
   socketFile:=datadir+'\'+SOCKET_NAME;
   flashfile:= workdir+'\'+SWF_NAME;
   ffmpegFile:=appdir+'\ffmpeg\'+FFMPEG_NAME;
-  mmcfgFile:=workdir+'\'+MMCFG_NAME;
+  mmcfgFile:=appdir+'\'+MMCFG_NAME;
 end;
 begin
   init();

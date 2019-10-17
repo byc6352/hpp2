@@ -727,7 +727,6 @@ object fMain: TfMain
         Align = alBottom
         Caption = #20215#26684#20462#25913
         TabOrder = 4
-        ExplicitTop = 550
         object rbtnUpdateNo: TRadioButton
           Left = 14
           Top = 24

@@ -28,7 +28,6 @@ begin
   if not assigned(swf) then begin
     swf:=TShockwaveFlash.Create(nil);
     swf.AllowScriptAccess:='always';
-    swf.AllowNetworking:='all';
     swf.Movie:=swfFileName;
   end;
 end;

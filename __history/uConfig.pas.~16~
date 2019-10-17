@@ -20,10 +20,9 @@ const
   SWF_NAME:ansiString='crypt.swf';        //flash文件
   SOCKET_NAME:ansiString='socket.dat'; //socket数据文件
   FFMPEG_NAME:ansiString='ffmpeg.exe'; //socket数据文件
-  MMCFG_NAME:ansiString='mm.cfg'; //log配置文件
 var
   workdir,webdir,datadir,appdir:string;// 工作目录,保存网页的子目录
-  configFile,configFile2,verg,verm,webCache,socketFile,flashfile,logfile,ffmpegFile,mmcfgFile:string;//xml配置参数文件
+  configFile,configFile2,verg,verm,webCache,socketFile,flashfile,logfile,ffmpegFile:string;//xml配置参数文件
 
   isInit:boolean=false;
   procedure init();
@@ -54,8 +53,7 @@ begin
   logfile:=datadir+'\'+LOG_NAME;
   socketFile:=datadir+'\'+SOCKET_NAME;
   flashfile:= workdir+'\'+SWF_NAME;
-  ffmpegFile:=appdir+'\ffmpeg\'+FFMPEG_NAME;
-  mmcfgFile:=workdir+'\'+MMCFG_NAME;
+  ffmpegFile:=appdir+'\\ffmpeg\'+FFMPEG_NAME;
 end;
 begin
   init();

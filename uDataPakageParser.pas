@@ -86,6 +86,7 @@ type
     //procedure setHostInfo(ip:ansiString;port:word);
     procedure getPriceCode(jsonData:ansiString);
     procedure getCurPrice(jsonData:ansiString;var curPrice:ansiString);
+    procedure getPriceCode2(yzCodeMsg:ansiString);
     //procedure getCurPrice(jsonData:ansiString;var curPrice:ansiString);
     //--------------------------------------------------------------------------------------
     procedure setHostInfo(Host:stHostInfo);
@@ -446,7 +447,8 @@ try
     strcopy(pOut^.JsonData,pansiChar(jsonData));
     if(mDataFlag=fImageMsgOK)then
     begin
-      getPriceCode(jsonData);
+      getPriceCode(mjsonData);
+      getPriceCode2(mcryptedData);
     end;
     if(mDataFlag=fImageDownOK)then
     begin
@@ -478,6 +480,14 @@ begin
   myJson:=TmyJson.Create(jsonData);
   curPrice:=myjson.getValue(11);
   myJson.Free;
+end;
+procedure TDataPackageParser.getPriceCode2(yzCodeMsg:ansiString);
+begin
+try
+  mPriceCode:=mflash.getPriceCode(yzCodeMsg);
+finally
+
+end;
 end;
 procedure TDataPackageParser.getPriceCode(jsonData:ansiString);
 var
