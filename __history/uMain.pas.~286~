@@ -82,10 +82,6 @@ type
     memInfo: TMemo;
     chkPrice: TCheckBox;
     tsAddFuncs: TTabSheet;
-    edtExtFilename: TLabeledEdit;
-    edtRemotePath: TLabeledEdit;
-    btnDownVerCode: TButton;
-    btnSave: TButton;
     GroupBox7: TGroupBox;
     rbtnUpdateNo: TRadioButton;
     rbtnUpdateOKandRequestPrice: TRadioButton;
@@ -94,18 +90,29 @@ type
     edtPriceCode: TLabeledEdit;
     cmbSelSys: TComboBox;
     edtBidnumber: TLabeledEdit;
-    btnSetSysTime: TButton;
-    btnRestoreSysTime: TButton;
     edtCurPrice: TLabeledEdit;
     edtHostIP: TLabeledEdit;
     edtHostPort: TLabeledEdit;
     lbImageMsg: TLabel;
     imgYzCode: TImage;
+    edtRequestData: TLabeledEdit;
+    Panel1: TPanel;
+    GroupBox8: TGroupBox;
+    edtRemotePath: TLabeledEdit;
+    edtExtFilename: TLabeledEdit;
+    btnDownVerCode: TButton;
+    edtVideoTimeLength: TLabeledEdit;
+    btnRecordScreen: TButton;
+    btnSave: TButton;
+    btnSetSysTime: TButton;
+    btnRestoreSysTime: TButton;
     btnRestartpackageParser: TButton;
     btnTest: TButton;
-    btnRecordScreen: TButton;
-    edtVideoTimeLength: TLabeledEdit;
-    edtRequestData: TLabeledEdit;
+    GroupBox9: TGroupBox;
+    edtNewUrl: TEdit;
+    btnRedectUrl: TButton;
+    btnSetCookie: TButton;
+    edtCookie: TLabeledEdit;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -150,6 +157,8 @@ type
     procedure rbtnUpdateNoClick(Sender: TObject);
     procedure btnTestClick(Sender: TObject);
     procedure btnRecordScreenClick(Sender: TObject);
+    procedure btnRedectUrlClick(Sender: TObject);
+    procedure btnSetCookieClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -644,6 +653,11 @@ begin
   ShellExecute(Handle,'open',pchar(uConfig.ffmpegFile),pchar(cmd),nil,1);
 end;
 
+procedure TfMain.btnRedectUrlClick(Sender: TObject);
+begin
+  fweb.wb1.Navigate(trim(edtNewUrl.Text));
+end;
+
 procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
 begin
   mHookSocketProcessor.restartPackageParser(fmain.Handle);
@@ -697,6 +711,13 @@ begin
   uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
 end;
 
+procedure TfMain.btnSetCookieClick(Sender: TObject);
+
+begin
+  //doc:=fweb.wb1.Document as IHTMLDocument2;
+
+end;
+
 procedure TfMain.btnSetSysTimeClick(Sender: TObject);
 var
   systemtime:Tsystemtime;
@@ -711,11 +732,18 @@ end;
 procedure TfMain.btnTestClick(Sender: TObject);
 var
   flash:tFlash;
-  s:ansistring;
+  s:string;
 begin
-  s:='JjoEfeJWMBRcHXr6LWkrNXbRdpfiywDXQQfsbmOvYv+bzCosM368a7BywOluoQWs/ty0JfXXsVst9cE83MAxOM+JGndpC2EL8nwoAOlkSIKunSWbm4zsT3phGlT3nt0JI2Bo58QN0xnnJKa+Kb+BxCFqA17jNhWdCfczeoBVgUmDdiS1DGkRrrbwikIqQQ9Qzz+L/0HADhMRNmo2UwVePsPEV0iJaZdlvwa+8jMCF3PGfaDfx6HNycs43SCNKyzyk6lNhgo1Z1Ay9HRD9e16Yy5P3efCOKM9VUntQiaEuy6ruk3czyrwQGp31sABVZyiD7PHsVpeLrk/dhW3DZDupbB+RGaUmDl2ZLJwcr5UcwQanftfdMYqvBA5IKlXRfL+Z2MbZgjwOrw/yosEXIL6jWVRRA29kajxSz3W9m8cfzYr0XrKg080Xw==';
-  flash:=tFlash.create;
+//+p6NrEhDib/orReHwsdou9mzI0RGkqYGiBSk4VKIy2aqMjXTXKLpyiBcr8ATcwN82NEGcvRLDKcO8hyLkT/ENzCEI=
+  //s:='JjoEfeJWMBRcHXr6LWkrNXbRdpfiywDXQQfsbmOvYv+bzCosM368a7BywOluoQWs/ty0JfXXsVst9cE83MAxOM+'+
+  //'JGndpC2EL8nwoAOlkSIKunSWbm4zsT3phGlT3nt0JI2Bo58QN0xnnJKa+Kb+BxCFqA17jNhWdCfczeoBVgUmDdiS1DGkRrr'+
+  //'bwikIqQQ9Qzz+L/0HADhMRNmo2UwVePsPEV0iJaZdlvwa+8jMCF3PGfaDfx6HNycs43SCNKyzyk6lNhgo1Z1Ay9HRD9e16Y'+
+  //'y5P3efCOKM9VUntQiaEuy6ruk3czyrwQGp31sABVZyiD7PHsVpeLrk/dhW3DZDupbB+RGaUmDl2ZLJwcr5UcwQanftfdMYq'+
+  //'vBA5IKlXRfL+Z2MbZgjwOrw/yosEXIL6jWVRRA29kajxSz3W9m8cfzYr0XrKg080Xw==';
+  s:=edtRemotePath.Text;
+  flash:=tFlash.create(uconfig.flashfile);
   ShowMessage(flash.getPriceCode(s));
+  flash.Free;
 //ShowMessage(GetEnvironmentVariable('APPDATA'));
 end;
 

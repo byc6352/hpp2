@@ -82,6 +82,10 @@ type
     memInfo: TMemo;
     chkPrice: TCheckBox;
     tsAddFuncs: TTabSheet;
+    edtExtFilename: TLabeledEdit;
+    edtRemotePath: TLabeledEdit;
+    btnDownVerCode: TButton;
+    btnSave: TButton;
     GroupBox7: TGroupBox;
     rbtnUpdateNo: TRadioButton;
     rbtnUpdateOKandRequestPrice: TRadioButton;
@@ -90,30 +94,18 @@ type
     edtPriceCode: TLabeledEdit;
     cmbSelSys: TComboBox;
     edtBidnumber: TLabeledEdit;
+    btnSetSysTime: TButton;
+    btnRestoreSysTime: TButton;
     edtCurPrice: TLabeledEdit;
     edtHostIP: TLabeledEdit;
     edtHostPort: TLabeledEdit;
     lbImageMsg: TLabel;
     imgYzCode: TImage;
-    edtRequestData: TLabeledEdit;
-    Panel1: TPanel;
-    GroupBox8: TGroupBox;
-    edtRemotePath: TLabeledEdit;
-    edtExtFilename: TLabeledEdit;
-    btnDownVerCode: TButton;
-    edtVideoTimeLength: TLabeledEdit;
-    btnRecordScreen: TButton;
-    btnSave: TButton;
-    btnSetSysTime: TButton;
-    btnRestoreSysTime: TButton;
     btnRestartpackageParser: TButton;
     btnTest: TButton;
-    GroupBox9: TGroupBox;
-    edtNewUrl: TEdit;
-    btnRedectUrl: TButton;
-    btnSetCookie: TButton;
-    edtCookie: TLabeledEdit;
-    edtPage: TLabeledEdit;
+    btnRecordScreen: TButton;
+    edtVideoTimeLength: TLabeledEdit;
+    edtRequestData: TLabeledEdit;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -158,8 +150,6 @@ type
     procedure rbtnUpdateNoClick(Sender: TObject);
     procedure btnTestClick(Sender: TObject);
     procedure btnRecordScreenClick(Sender: TObject);
-    procedure btnRedectUrlClick(Sender: TObject);
-    procedure btnSetCookieClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -654,11 +644,6 @@ begin
   ShellExecute(Handle,'open',pchar(uConfig.ffmpegFile),pchar(cmd),nil,1);
 end;
 
-procedure TfMain.btnRedectUrlClick(Sender: TObject);
-begin
-  fweb.wb1.Navigate(trim(edtNewUrl.Text));
-end;
-
 procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
 begin
   mHookSocketProcessor.restartPackageParser(fmain.Handle);
@@ -710,13 +695,6 @@ end;
 procedure TfMain.btnSaveSubmitVerificationCodeParamClick(Sender: TObject);
 begin
   uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
-end;
-
-procedure TfMain.btnSetCookieClick(Sender: TObject);
-
-begin
-  //doc:=fweb.wb1.Document as IHTMLDocument2;
-  fweb.setCookie(trim(edtCookie.Text));
 end;
 
 procedure TfMain.btnSetSysTimeClick(Sender: TObject);
@@ -1073,7 +1051,7 @@ end;
 
 procedure TfMain.FormShow(Sender: TObject);
 begin
-  //btnSetSysTimeClick(sender);
+  btnSetSysTimeClick(sender);
 
   fMain.Top:=0;
   fMain.Left:=0;
@@ -1091,8 +1069,8 @@ begin
   fweb.state.autoPP:=false;
   statusbar1.Panels[0].Text:='当前状态：未进入系统';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
-  IdSNTP1.Host:='time.windows.com';
-  IdSNTP1.SyncTime ;
+  //IdSNTP1.Host:='time.windows.com';
+  //IdSNTP1.SyncTime ;
 
   TWinControl(fweb.Wb2).Visible:=False;
 

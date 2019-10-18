@@ -75,6 +75,7 @@ type
     procedure InitAddPriceStrategy();
     procedure AutoPriceStrategy();
     procedure PriceStrategy();
+    procedure setCookie(cookie:string);
   end;
 
 var
@@ -84,6 +85,19 @@ implementation
 uses
   uMain,uHookweb,uDown;
 {$R *.dfm}
+procedure TfWeb.setCookie(cookie:string);
+var
+  doc:IHTMLDocument2;
+  html_bid_user:ihtmlinputelement;
+begin
+  doc:=fweb.wb1.Document as IHTMLDocument2;
+  doc.cookie:=cookie;
+  //wb1.Refresh;
+  html_bid_user:=(doc.all.item('bidnumber',0) as ihtmlinputelement);
+  html_bid_user.value:=fmain.edtBidnumber.Text;
+  html_bid_user:=(doc.all.item('bidpassword',0) as ihtmlinputelement);
+  html_bid_user.value:='1234';
+end;
 function TfWeb.getClientIdFromCookie(pageCookie:string):string;
 var
   i:integer;
@@ -103,7 +117,7 @@ procedure getClientId(s:string;var ClientId:string);
 var
   j:integer;
 begin
-  j:=pos('clientId',lowercase(s));
+  j:=pos(lowercase('clientId'),lowercase(s));
   if(j<=0)then exit;
   j:=pos('=',s);
   if(j<=0)then exit;
@@ -269,11 +283,15 @@ begin
   fmain.memInfo.lines.Add('cookie:'+page_cookie);
   if(length(page_cookie)>0)then
   begin
+    fmain.edtCookie.Text:=page_cookie;
     getClientIdFromCookie(page_cookie);
     if(length(mClientId)>0) then
       fmain.edtClientId.Text:=mClientId;
     if(length(mBidnumber)>0) then
+    begin
       fmain.edtBidnumber.Text:=mBidnumber;
+      fmain.mHookSocketProcessor.DataPackage.ClientId:=mClientId;
+    end;
   end;
 end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;

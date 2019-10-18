@@ -45,7 +45,7 @@ type
     procedure mouseClick(pos:tPoint);
     procedure keyPress(k:char);
     procedure inputstring(s:string);
-    function getClientIdFromCookie(pageCokie:string):string;
+    function getClientIdFromCookie(pageCookie:string):string;
   public
     { Public declarations }
     appName,appVersion:string;//系统名称，版本号
@@ -93,7 +93,7 @@ procedure getBidnumber(s:string;var bidnumber:string);
 var
   j:integer;
 begin
-  j:=pos('bidnumber',lowcase(s));
+  j:=pos('bidnumber',lowercase(s));
   if(j<=0)then exit;
   j:=pos('=',s);
   if(j<=0)then exit;
@@ -103,7 +103,7 @@ procedure getClientId(s:string;var ClientId:string);
 var
   j:integer;
 begin
-  j:=pos('clientId',lowcase(s));
+  j:=pos(lowercase('clientId'),lowercase(s));
   if(j<=0)then exit;
   j:=pos('=',s);
   if(j<=0)then exit;
@@ -273,7 +273,10 @@ begin
     if(length(mClientId)>0) then
       fmain.edtClientId.Text:=mClientId;
     if(length(mBidnumber)>0) then
+    begin
       fmain.edtBidnumber.Text:=mBidnumber;
+      fmain.mHookSocketProcessor.DataPackage.ClientId:=mClientId;
+    end;
   end;
 end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;

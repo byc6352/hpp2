@@ -82,10 +82,6 @@ type
     memInfo: TMemo;
     chkPrice: TCheckBox;
     tsAddFuncs: TTabSheet;
-    edtExtFilename: TLabeledEdit;
-    edtRemotePath: TLabeledEdit;
-    btnDownVerCode: TButton;
-    btnSave: TButton;
     GroupBox7: TGroupBox;
     rbtnUpdateNo: TRadioButton;
     rbtnUpdateOKandRequestPrice: TRadioButton;
@@ -94,18 +90,30 @@ type
     edtPriceCode: TLabeledEdit;
     cmbSelSys: TComboBox;
     edtBidnumber: TLabeledEdit;
-    btnSetSysTime: TButton;
-    btnRestoreSysTime: TButton;
     edtCurPrice: TLabeledEdit;
     edtHostIP: TLabeledEdit;
     edtHostPort: TLabeledEdit;
     lbImageMsg: TLabel;
     imgYzCode: TImage;
+    edtRequestData: TLabeledEdit;
+    Panel1: TPanel;
+    GroupBox8: TGroupBox;
+    edtRemotePath: TLabeledEdit;
+    edtExtFilename: TLabeledEdit;
+    btnDownVerCode: TButton;
+    edtVideoTimeLength: TLabeledEdit;
+    btnRecordScreen: TButton;
+    btnSave: TButton;
+    btnSetSysTime: TButton;
+    btnRestoreSysTime: TButton;
     btnRestartpackageParser: TButton;
     btnTest: TButton;
-    btnRecordScreen: TButton;
-    edtVideoTimeLength: TLabeledEdit;
-    edtRequestData: TLabeledEdit;
+    GroupBox9: TGroupBox;
+    edtNewUrl: TEdit;
+    btnRedectUrl: TButton;
+    btnSetCookie: TButton;
+    edtCookie: TLabeledEdit;
+    edtPage: TLabeledEdit;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -150,6 +158,8 @@ type
     procedure rbtnUpdateNoClick(Sender: TObject);
     procedure btnTestClick(Sender: TObject);
     procedure btnRecordScreenClick(Sender: TObject);
+    procedure btnRedectUrlClick(Sender: TObject);
+    procedure btnSetCookieClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -175,7 +185,7 @@ type
 
 var
   fMain: TfMain;
-  iDown:integer;//ÏÂÔØÖ¸Õë
+  iDown:integer;//ä¸‹è½½æŒ‡é’ˆ
   function URLEncode(msg:String):String;
   function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
   function initEndTime():string;
@@ -437,10 +447,10 @@ begin
   i:=msg.LParam;
   j:=msg.WParam;
   case j of
-  0:meminfo.Lines.Add('down fal£º'+inttostr(i)+'['+datas[i].ObjectName+']');
-  1:meminfo.Lines.Add('down suc£º'+inttostr(i)+'['+datas[i].ObjectName+']');
-  2:meminfo.Lines.Add('down suc£º'+inttostr(i));
-  3:meminfo.Lines.Add('down end£º'+inttostr(i));
+  0:meminfo.Lines.Add('down falï¼š'+inttostr(i)+'['+datas[i].ObjectName+']');
+  1:meminfo.Lines.Add('down sucï¼š'+inttostr(i)+'['+datas[i].ObjectName+']');
+  2:meminfo.Lines.Add('down sucï¼š'+inttostr(i));
+  3:meminfo.Lines.Add('down endï¼š'+inttostr(i));
   end;
 end;
 procedure TfMain.httpMessage(var msg:TMessage);
@@ -454,15 +464,15 @@ begin
   len:=msg.WParam;
   case flag of
   0:begin
-      say:='·¢ËÍÊı¾İ£º'+inttostr(len);
+      say:='å‘é€æ•°æ®ï¼š'+inttostr(len);
       //data:=gSend;
     end;
   1:begin
-      say:='½ÓÊÕÊı¾İ£º'+inttostr(len);
+      say:='æ¥æ”¶æ•°æ®ï¼š'+inttostr(len);
       //data:=gRecv;
     end;
   2:begin
-      say:='URL£º';
+      say:='URLï¼š';
       data:=uData.datas[idata-1].ObjectName;
       //addDown();
       if(fweb.state.VirtualSys)then getVerCode(data);
@@ -476,9 +486,9 @@ function initEndTime():string;
 //const
   //END_TIME='11:30:00';
 var
-  w:word;//Ã¿ÔÂµÚ¼¸¸öĞÇÆÚ£»
-  d:word;//µ±Ç°ÊÇĞÇÆÚ¼¸£»
-  r:integer;//Ê±¼ä±È½Ï½á¹û
+  w:word;//æ¯æœˆç¬¬å‡ ä¸ªæ˜ŸæœŸï¼›
+  d:word;//å½“å‰æ˜¯æ˜ŸæœŸå‡ ï¼›
+  r:integer;//æ—¶é—´æ¯”è¾ƒç»“æœ
   END_TIME_t:ttime; //11:30:00
   endDateTime,dayString,datetimeString:string;
   fmt: TFormatSettings;
@@ -509,8 +519,8 @@ var
   say:string;
 begin
 
-  say:='ÀëÅÄÂô½áÊøÇ°'+edtRequestVercodeTime.Text+'ÃëÌá½»Ò»¸ö¼Ó'+inttostr(fweb.mAddPrice)+'µÄ¼Û¸ñ£»';
-  memStrategySay.Text:='²ßÂÔ'+inttostr(cmbStrategy.ItemIndex+1)+'ËµÃ÷£º '+#13#10+say;
+  say:='ç¦»æ‹å–ç»“æŸå‰'+edtRequestVercodeTime.Text+'ç§’æäº¤ä¸€ä¸ªåŠ '+inttostr(fweb.mAddPrice)+'çš„ä»·æ ¼ï¼›';
+  memStrategySay.Text:='ç­–ç•¥'+inttostr(cmbStrategy.ItemIndex+1)+'è¯´æ˜ï¼š '+#13#10+say;
 
   if(cmbStrategy.ItemIndex=0) then begin
     uXml.setXmlNodeValue(configFile,'pp.strategy.strategy1','requestvercodetime',edtRequestVercodeTime.Text);
@@ -532,35 +542,35 @@ end;
 procedure TfMain.btnAutoPPClick(Sender: TObject);
 begin
 
-  if(btnAutoPP.Caption='×Ô¶¯ÇÀÅÄ')then
+  if(btnAutoPP.Caption='è‡ªåŠ¨æŠ¢æ‹')then
   begin
     if(fweb.state.enterSys=false)then
     begin
-      showmessage('±ØĞëÏÈ½øÈëÇÀÅÄÏµÍ³£¬²ÅÄÜ¿ªÊ¼ÇÀÅÄ£¡');
+      showmessage('å¿…é¡»å…ˆè¿›å…¥æŠ¢æ‹ç³»ç»Ÿï¼Œæ‰èƒ½å¼€å§‹æŠ¢æ‹ï¼');
       exit;
     end;
-    btnAutoPP.Caption:='Í£Ö¹ÇÀÅÄ';
+    btnAutoPP.Caption:='åœæ­¢æŠ¢æ‹';
     fweb.state.autoPP:=true;
     setParamsToWeb();
     fweb.initAddPriceStrategy();
-    saveStrategy(fweb.configFile);//±£´æ²ßÂÔ²ÎÊı
+    saveStrategy(fweb.configFile);//ä¿å­˜ç­–ç•¥å‚æ•°
     if(fweb.state.VirtualSys)then
       begin
-        statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÄ£ÄâÇÀÅÄÏµÍ³£¬ÒÑ´ò¿ª×Ô¶¯ÇÀÅÄ';
+        statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæ¨¡æ‹ŸæŠ¢æ‹ç³»ç»Ÿï¼Œå·²æ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
         exit;
       end else begin
-        statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£º¹úÅÄÇÀÅÄÏµÍ³£¬ÒÑ´ò¿ª×Ô¶¯ÇÀÅÄ';
+        statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šå›½æ‹æŠ¢æ‹ç³»ç»Ÿï¼Œå·²æ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
       end;
   end else begin
-    btnAutoPP.Caption:='×Ô¶¯ÇÀÅÄ';
+    btnAutoPP.Caption:='è‡ªåŠ¨æŠ¢æ‹';
     fweb.state.autoPP:=false;
     chkPrice.Checked:=false;
     if(fweb.state.VirtualSys)then
     begin
-      statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÄ£ÄâÇÀÅÄÏµÍ³£¬ÒÑÍ£Ö¹×Ô¶¯ÇÀÅÄ';
+      statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæ¨¡æ‹ŸæŠ¢æ‹ç³»ç»Ÿï¼Œå·²åœæ­¢è‡ªåŠ¨æŠ¢æ‹';
       exit;
     end else begin
-      statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£º¹úÅÄÇÀÅÄÏµÍ³£¬ÒÑÍ£Ö¹×Ô¶¯ÇÀÅÄ';
+      statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šå›½æ‹æŠ¢æ‹ç³»ç»Ÿï¼Œå·²åœæ­¢è‡ªåŠ¨æŠ¢æ‹';
     end;
   end;
 end;
@@ -569,17 +579,17 @@ procedure TfMain.btnDownVerCodeClick(Sender: TObject);
 var
   remoteName,ExtFileName:string;
 begin
-  if(btnDownVerCode.Caption='ÏÂÔØ')then begin
+  if(btnDownVerCode.Caption='ä¸‹è½½')then begin
   remoteName:=trim(edtRemotePath.Text);
   ExtFileName:=trim(edtExtFileName.text);
   if(remoteName[length(remoteName)]<>'/')then
     uTryDown.tryDownloadFiles(remoteName)
   else
     uTryDown.tryDownloadFiles(remoteName,ExtFileName);
-    btnDownVerCode.Caption:='Í£Ö¹';
+    btnDownVerCode.Caption:='åœæ­¢';
   end else begin
     uTryDown.bDownFiles:=false;
-    btnDownVerCode.Caption:='ÏÂÔØ';
+    btnDownVerCode.Caption:='ä¸‹è½½';
   end;
 end;
 
@@ -611,11 +621,11 @@ begin
   //https://paimai2.alltobid.com/bid/b901b3c0ba414c3bb7c08761aedbff50/login.htm
   //webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.GPaddr);
-  //×´Ì¬ÏÔÊ¾£º
+  //çŠ¶æ€æ˜¾ç¤ºï¼š
   fweb.state.enterSys:=true;
   fweb.state.VirtualSys:=false;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£º¹úÅÄÇÀÅÄÏµÍ³£¬Î´´ò¿ª×Ô¶¯ÇÀÅÄ';
+  statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šå›½æ‹æŠ¢æ‹ç³»ç»Ÿï¼Œæœªæ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
   btnVirtual.Enabled:=false;
   //rctWeb:=rect(900,20,1860,780);
   //MoveWindow(fWeb.Handle,rctWeb.left,rctWeb.Top,rctWeb.Width,rctweb.Height,true);
@@ -642,6 +652,11 @@ begin
   //cmd:=uConfig.ffmpegFile+' -y -f gdigrab  -t '+recordTime+' -r 25 -i desktop -vcodec libx264 -s 1920x1080 '+mp4;
   cmd:=' -y -f gdigrab  -t '+recordTime+' -r 25 -i desktop -vcodec libx264 -s 1920x1080 '+mp4;
   ShellExecute(Handle,'open',pchar(uConfig.ffmpegFile),pchar(cmd),nil,1);
+end;
+
+procedure TfMain.btnRedectUrlClick(Sender: TObject);
+begin
+  fweb.wb1.Navigate(trim(edtNewUrl.Text));
 end;
 
 procedure TfMain.btnRestartpackageParserClick(Sender: TObject);
@@ -697,13 +712,20 @@ begin
   uXml.SetXMLNodeSpecialValue(fweb.configFile,'pp.pos.submitvercode','',trim(edtSubmitVerificationCodeParam.text));
 end;
 
+procedure TfMain.btnSetCookieClick(Sender: TObject);
+
+begin
+  //doc:=fweb.wb1.Document as IHTMLDocument2;
+  fweb.setCookie(trim(edtCookie.Text));
+end;
+
 procedure TfMain.btnSetSysTimeClick(Sender: TObject);
 var
   systemtime:Tsystemtime;
   DateTime:TDateTime;
 begin
-  DateTime:=StrToDateTime('2019/09/22 11:00:00');   //»ñµÃÊ±¼ä£¨TDateTime¸ñÊ½£©
-  DateTimeToSystemTime(DateTime,systemtime);   //°ÑDelphiµÄTDateTime¸ñÊ½×ª»¯ÎªAPIµÄTSystemTime¸ñÊ½
+  DateTime:=StrToDateTime('2019/09/22 11:00:00');   //è·å¾—æ—¶é—´ï¼ˆTDateTimeæ ¼å¼ï¼‰
+  DateTimeToSystemTime(DateTime,systemtime);   //æŠŠDelphiçš„TDateTimeæ ¼å¼è½¬åŒ–ä¸ºAPIçš„TSystemTimeæ ¼å¼
   SetLocalTime(SystemTime);
 
 end;
@@ -713,10 +735,16 @@ var
   flash:tFlash;
   s:string;
 begin
-  s:='JjoEfeJWMBRcHXr6LWkrNXbRdpfiywDXQQfsbmOvYv+bzCosM368a7BywOluoQWs/ty0JfXXsVst9cE83MAxOM+'+
-  'JGndpC2EL8nwoAOlkSIKunSWbm4zsT3phGlT3nt0JI2Bo58QN0xnnJKa+Kb+BxCFqA17jNhWdCfczeoBVgUmDdiS1DGkRrrbwikIqQQ9Qzz+L/0HADhMRNmo2UwVePsPEV0iJaZdlvwa+8jMCF3PGfaDfx6HNycs43SCNKyzyk6lNhgo1Z1Ay9HRD9e16Yy5P3efCOKM9VUntQiaEuy6ruk3czyrwQGp31sABVZyiD7PHsVpeLrk/dhW3DZDupbB+RGaUmDl2ZLJwcr5UcwQanftfdMYqvBA5IKlXRfL+Z2MbZgjwOrw/yosEXIL6jWVRRA29kajxSz3W9m8cfzYr0XrKg080Xw==';
-  flash:=tFlash.create;
+//+p6NrEhDib/orReHwsdou9mzI0RGkqYGiBSk4VKIy2aqMjXTXKLpyiBcr8ATcwN82NEGcvRLDKcO8hyLkT/ENzCEI=
+  //s:='JjoEfeJWMBRcHXr6LWkrNXbRdpfiywDXQQfsbmOvYv+bzCosM368a7BywOluoQWs/ty0JfXXsVst9cE83MAxOM+'+
+  //'JGndpC2EL8nwoAOlkSIKunSWbm4zsT3phGlT3nt0JI2Bo58QN0xnnJKa+Kb+BxCFqA17jNhWdCfczeoBVgUmDdiS1DGkRrr'+
+  //'bwikIqQQ9Qzz+L/0HADhMRNmo2UwVePsPEV0iJaZdlvwa+8jMCF3PGfaDfx6HNycs43SCNKyzyk6lNhgo1Z1Ay9HRD9e16Y'+
+  //'y5P3efCOKM9VUntQiaEuy6ruk3czyrwQGp31sABVZyiD7PHsVpeLrk/dhW3DZDupbB+RGaUmDl2ZLJwcr5UcwQanftfdMYq'+
+  //'vBA5IKlXRfL+Z2MbZgjwOrw/yosEXIL6jWVRRA29kajxSz3W9m8cfzYr0XrKg080Xw==';
+  s:=edtRemotePath.Text;
+  flash:=tFlash.create(uconfig.flashfile);
   ShowMessage(flash.getPriceCode(s));
+  flash.Free;
 //ShowMessage(GetEnvironmentVariable('APPDATA'));
 end;
 
@@ -767,14 +795,14 @@ end;
 procedure TfMain.btnTestPPClick(Sender: TObject);
 begin
   fweb.InitAddPriceStrategy;
-  if(btnTestPP.Caption='²âÊÔÇÀÅÄ') then begin
-    btnTestPP.Caption:='Í£Ö¹²âÊÔ';
+  if(btnTestPP.Caption='æµ‹è¯•æŠ¢æ‹') then begin
+    btnTestPP.Caption:='åœæ­¢æµ‹è¯•';
     setParamsToWeb();
     fweb.mRemainSec:=20;
     timer2.Enabled:=true;
     timer1.Enabled:=false;
   end else begin
-    btnTestPP.Caption:='²âÊÔÇÀÅÄ';
+    btnTestPP.Caption:='æµ‹è¯•æŠ¢æ‹';
     fweb.mRemainSec:=2000;
     timer2.Enabled:=false;
     timer1.Enabled:=true;
@@ -842,16 +870,16 @@ begin
   try
     IdHTTP1.get('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=5G4tOXwCGG5buEFPrZGGykal&client_secret=ceAs9I9xHUzrxs0OWfEBed2HnA4CerLS',memstr);
   except
-    showmessage('»ñÈ¡token³ö´í');
+    showmessage('è·å–tokenå‡ºé”™');
     memstr.Free;
     btnToken.Enabled:=true;
     exit;
   end;
   ss:= memstr.DataString;
-  //token ÌáÈ¡
+  //token æå–
   i:= pos('access_token',ss);
   if i=0 then begin
-    showmessage('È¡µÃµÄtokenÎª¿Õ');; //»ñÈ¡ÊÚÈ¨³ö´í
+    showmessage('å–å¾—çš„tokenä¸ºç©º');; //è·å–æˆæƒå‡ºé”™
     memstr.Free;
     btnToken.Enabled:=true;
     exit;
@@ -863,7 +891,7 @@ begin
 
   edtToken.Text:= token;
   fweb.token:=token;
-  //±£´æ
+  //ä¿å­˜
   DateTimeToString(gettime,'yyyy-mm-dd',now());
   uXml.setXmlNodeValue(uconfig.configFile,'pp.token','gettime',gettime);
   uXml.setXmlNodeValue(uconfig.configFile,'pp.token','',token);
@@ -884,7 +912,7 @@ begin
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
   //fweb.mFinishTime:=VarToDateTime(trim(edtFinishTime.Text));
 
-  showmessage('¸üĞÂ³É¹¦£¡');
+  showmessage('æ›´æ–°æˆåŠŸï¼');
 end;
 
 procedure TfMain.btnUpdateInputPriceParamClick(Sender: TObject);
@@ -921,11 +949,11 @@ begin
   //fWeb.wb1.Navigate('http://test.alltobid.com/moni/gerenbid.html');
   //webhook.HookWebAPI;
   fWeb.wb1.Navigate(fweb.virtalAddr);
-  //×´Ì¬ÏÔÊ¾£º
+  //çŠ¶æ€æ˜¾ç¤ºï¼š
   fweb.state.enterSys:=true;
   fweb.state.VirtualSys:=true;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÄ£ÄâÇÀÅÄÏµÍ³£¬Î´´ò¿ª×Ô¶¯ÇÀÅÄ';
+  statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæ¨¡æ‹ŸæŠ¢æ‹ç³»ç»Ÿï¼Œæœªæ‰“å¼€è‡ªåŠ¨æŠ¢æ‹';
   btnGP.Enabled:=false;
   if not Assigned(fweb.mVerg) then fweb.mVerg:=tstringlist.Create;
   if not Assigned(fweb.mVerm) then fweb.mVerm:=tstringlist.Create;
@@ -965,7 +993,7 @@ case cmbStrategy.ItemIndex of
     say:=uXml.GetXMLNodeValue(fweb.configFile,'pp.strategy.strategy3');
   end;
 end;
-  memStrategySay.Text:='²ßÂÔ'+inttostr(cmbStrategy.ItemIndex+1)+'ËµÃ÷£º '+#13#10+say;
+  memStrategySay.Text:='ç­–ç•¥'+inttostr(cmbStrategy.ItemIndex+1)+'è¯´æ˜ï¼š '+#13#10+say;
 
 end;
 
@@ -975,7 +1003,7 @@ begin
 end;
 
 {-----------------------------------------------------------------------------------
-½«²ÎÊıĞ´Èëµ½ä¯ÀÀÆ÷´°ÌåÖĞ;
+å°†å‚æ•°å†™å…¥åˆ°æµè§ˆå™¨çª—ä½“ä¸­;
 }
 procedure TfMain.setParamsToWeb();
 begin
@@ -1003,7 +1031,7 @@ begin
   fweb.token:=trim(edttoken.Text);
 end;
 {-----------------------------------------------------------------------------------
-´ÓxmlÎÄ¼ş»ñÈ¡²ÎÊıĞ´Èëµ½¿Ø¼şÖĞ;
+ä»xmlæ–‡ä»¶è·å–å‚æ•°å†™å…¥åˆ°æ§ä»¶ä¸­;
 }
 procedure TfMain.getParamsToCtl(configFile:string);
 begin
@@ -1045,7 +1073,7 @@ end;
 
 procedure TfMain.FormShow(Sender: TObject);
 begin
-  btnSetSysTimeClick(sender);
+  //btnSetSysTimeClick(sender);
 
   fMain.Top:=0;
   fMain.Left:=0;
@@ -1055,16 +1083,16 @@ begin
   cmbStrategy.OnChange(sender);
   edtFinishTime.Text:=initendTime();
   setParamstoWeb();
-  self.Caption:=fweb.appName+'v'+fweb.appVersion+'ÁªÏµQQ1409232611Î¢ĞÅ£ºbyc6352';
-  statusbar1.Panels[2].Text:='µ±Ç°ÆÁÄ»·Ö±æÂÊ£º'+inttostr(screen.Width)+','+inttostr(screen.Height);
-  //×´Ì¬ÏÔÊ¾£º
+  self.Caption:=fweb.appName+'v'+fweb.appVersion+'è”ç³»QQ1409232611å¾®ä¿¡ï¼šbyc6352';
+  statusbar1.Panels[2].Text:='å½“å‰å±å¹•åˆ†è¾¨ç‡ï¼š'+inttostr(screen.Width)+','+inttostr(screen.Height);
+  //çŠ¶æ€æ˜¾ç¤ºï¼š
   fweb.state.enterSys:=false;
   fweb.state.VirtualSys:=true;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='µ±Ç°×´Ì¬£ºÎ´½øÈëÏµÍ³';
+  statusbar1.Panels[0].Text:='å½“å‰çŠ¶æ€ï¼šæœªè¿›å…¥ç³»ç»Ÿ';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
 
   TWinControl(fweb.Wb2).Visible:=False;
 
@@ -1086,21 +1114,21 @@ begin
   r := CompareDateTime(fweb.mFinishTime,now()); //1
   if(fweb.state.autoPP)then begin
     if(r=-1)then
-     if(btnAutoPP.Caption='Í£Ö¹ÇÀÅÄ')then
+     if(btnAutoPP.Caption='åœæ­¢æŠ¢æ‹')then
       btnAutoPP.Click();
   end else begin
     if(fweb.mRemainSec<=20)and(fweb.state.enterSys=true or fweb.state.VirtualSys=true)and(r=1)then
-       if(btnAutoPP.Caption='×Ô¶¯ÇÀÅÄ')then btnAutoPP.Click();
+       if(btnAutoPP.Caption='è‡ªåŠ¨æŠ¢æ‹')then btnAutoPP.Click();
   end;
   DateTimeToString(s,'yyyy-mm-dd-hh-nn ss ',now());
-  s:='µ±Ç°Ê±¼ä£º'+s;
-  if(r=1)then s:=s+'Ê£Óà£º'+inttostr(fweb.mRemainSec) else s:=s+'Ê£Óà£º-'+inttostr(fweb.mRemainSec);
+  s:='å½“å‰æ—¶é—´ï¼š'+s;
+  if(r=1)then s:=s+'å‰©ä½™ï¼š'+inttostr(fweb.mRemainSec) else s:=s+'å‰©ä½™ï¼š-'+inttostr(fweb.mRemainSec);
   statusbar1.Panels[1].Text:=s;
   getPrice();
   //if(fweb.Visible=true and chkFwebOnTop.Checked=true)then BringWindowToTop(fweb.handle);
   if(fWeb.state.autoPP)then begin
     fWeb.PriceStrategy();
-    //fWeb.strategy1();//Ö´ĞĞ²ßÂÔ1
+    //fWeb.strategy1();//æ‰§è¡Œç­–ç•¥1
     //if(cmbStrategy.ItemIndex=0)then
     //  fWeb.AutoPriceStrategy
     //else
@@ -1150,9 +1178,9 @@ begin
   price:=trim(baiduIdentify(bmp));
   if(length(price)<=6) and (length(price)>=5) then begin
     fweb.mPrice:=strtoint(price);
-    statusbar1.Panels[2].Text:='µ±Ç°×îµÍ³É½»¼Û£º'+price;
+    statusbar1.Panels[2].Text:='å½“å‰æœ€ä½æˆäº¤ä»·ï¼š'+price;
   end;
-  //fmain.Caption:='»¦ÅÄÅÆÖúÊÖv1.0 '+mPrice;
+  //fmain.Caption:='æ²ªæ‹ç‰ŒåŠ©æ‰‹v1.0 '+mPrice;
 end;
 function TfMain.baiduIdentify(bmp:Tbitmap):string;
 var
@@ -1183,7 +1211,7 @@ begin
   iddec:=TIdEncoderMIME.Create;
   ss:= iddec.Encode(mem);  //  *******
   mem.Free;
-  //Ìá½»
+  //æäº¤
   str1:= tstringlist.Create;
   str1.Add('image='+ URLEncode(ss));
       //str1.savetoFile('d:\c.txt');
@@ -1248,7 +1276,7 @@ end;
 
 
 {
-  function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//×éºÏurl
+  function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//ç»„åˆurl
   procedure addDown();
 
  procedure addDown();
@@ -1268,7 +1296,7 @@ begin
   end;
 
 end;
-function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//×éºÏurl
+function MergeUrl(ServerName,ObjectName:string;ServerPort:DWORD):string;//ç»„åˆurl
 var
   protocol:string;
 begin

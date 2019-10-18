@@ -45,7 +45,7 @@ type
     procedure mouseClick(pos:tPoint);
     procedure keyPress(k:char);
     procedure inputstring(s:string);
-
+    function getClientIdFromCookie(pageCookie:string):string;
   public
     { Public declarations }
     appName,appVersion:string;//系统名称，版本号
@@ -66,7 +66,7 @@ type
     configFile:string;//当前配置文件；
     token:string;
     mVerg,mVerm:tstrings;//验证码；
-
+    mclientId,mbidnumber:string;//客户id
     procedure strategy1();
     procedure Initstrategy1();
     procedure strategy1Test();//测试抢拍策略1
@@ -75,6 +75,7 @@ type
     procedure InitAddPriceStrategy();
     procedure AutoPriceStrategy();
     procedure PriceStrategy();
+    procedure setCookie(cookie:string);
   end;
 
 var
@@ -84,6 +85,62 @@ implementation
 uses
   uMain,uHookweb,uDown;
 {$R *.dfm}
+procedure TfWeb.setCookie(cookie:string);
+var
+  doc:IHTMLDocument2;
+  html_bid_user:ihtmlinputelement;
+begin
+  doc:=fweb.wb1.Document as IHTMLDocument2;
+  doc.cookie:=cookie;
+  //wb1.Refresh;
+  html_bid_user:=(doc.all.item('bidnumber',0) as ihtmlinputelement);
+  html_bid_user.value:=fmain.edtBidnumber.Text;
+  html_bid_user:=(doc.all.item('bidpassword',0) as ihtmlinputelement);
+  html_bid_user.value:='1234';
+end;
+function TfWeb.getClientIdFromCookie(pageCookie:string):string;
+var
+  i:integer;
+  ss:tstrings;
+  s:string;
+procedure getBidnumber(s:string;var bidnumber:string);
+var
+  j:integer;
+begin
+  j:=pos('bidnumber',lowercase(s));
+  if(j<=0)then exit;
+  j:=pos('=',s);
+  if(j<=0)then exit;
+  bidnumber:=rightstr(s,length(s)-j);
+end;
+procedure getClientId(s:string;var ClientId:string);
+var
+  j:integer;
+begin
+  j:=pos(lowercase('clientId'),lowercase(s));
+  if(j<=0)then exit;
+  j:=pos('=',s);
+  if(j<=0)then exit;
+  ClientId:=rightstr(s,length(s)-j);
+end;
+begin
+  result:='';
+  if length(pageCookie)=0 then  exit;
+try
+  ss:=tstringlist.Create;
+  ss.Delimiter:=';';
+  ss.DelimitedText:=pageCookie;
+  if ss.Count<=0 then exit;
+  for I := 0 to ss.Count-1 do
+  begin
+    getBidnumber(ss[i],mBidnumber);
+    getClientId(ss[i],mClientId);
+  end;
+  result:=mClientId;
+finally
+  ss.Free;
+end;
+end;
 procedure TfWeb.SaveScreen();
 var
   bmp:tbitmap;
@@ -168,7 +225,7 @@ procedure TfWeb.wb1BeforeNavigate2(ASender: TObject; const pDisp: IDispatch;
   var Cancel: WordBool);
 begin
   uHookweb.state:=STAT_BROWSING;
-  uDown.pause;
+  //uDown.pause;
   //bar1.Panels[0].Text:='正在加载页面...';
 end;
 
@@ -176,7 +233,7 @@ procedure TfWeb.wb1DocumentComplete(ASender: TObject; const pDisp: IDispatch;
   const URL: OleVariant);
 var
   ms: TMemoryStream;
-  filename:string;
+  page_cookie:string;
   doc: IHTMLDocument2;
   Web  : iWebBrowser2;
   tmpX,
@@ -186,9 +243,10 @@ begin
   if(Wb1.ReadyState<>READYSTATE_COMPLETE)then exit;
   if(uHookweb.state=STAT_IDLE)then exit;
   uHookweb.state:=STAT_IDLE;
-  uDown.start();
+
   fWeb.width:=wb1.width;
   fWeb.height:=wb1.Height;
+  //uDown.start();
   //doc:=wb1.Document as IHTMLDocument2;
   {
   ms := TMemoryStream.Create;
@@ -220,6 +278,23 @@ begin
   //if(mProtocol='HyperText Transfer Protocol with Privacy')then mProtocol:='https://' else mProtocol:='http://';
   //if(pos(mPage,mDowns.Text)<=0)then mDowns.Add(mPage);
   //downloadFilesThread();
+  doc:=wb1.Document as IHTMLDocument2;
+  fmain.memInfo.lines.Add('cookie:'+doc.cookie);
+  if(pos('bid.htm',doc.url)<=0)then exit;
+  page_cookie:=doc.cookie;
+
+  if(length(page_cookie)>0)then
+  begin
+    fmain.edtCookie.Text:=page_cookie;
+    getClientIdFromCookie(page_cookie);
+    if(length(mClientId)>0) then
+      fmain.edtClientId.Text:=mClientId;
+    if(length(mBidnumber)>0) then
+    begin
+      fmain.edtBidnumber.Text:=mBidnumber;
+      fmain.mHookSocketProcessor.DataPackage.ClientId:=mClientId;
+    end;
+  end;
 end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
   var Cancel: WordBool);
