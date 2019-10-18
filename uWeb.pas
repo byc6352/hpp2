@@ -102,14 +102,13 @@ try
   begin
     doc.cookie:=ss[i];
   end;
-
   //wb1.Refresh;
   html_bid_user:=(doc.all.item('bidnumber',0) as ihtmlinputelement);
   html_bid_user.value:=fmain.edtBidnumber.Text;
   html_bid_user:=(doc.all.item('bidpassword',0) as ihtmlinputelement);
   html_bid_user.value:='1234';
 finally
-
+  ss.Free;
 end;
 end;
 function TfWeb.getClientIdFromCookie(pageCookie:string):string;

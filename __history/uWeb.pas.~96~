@@ -67,6 +67,7 @@ type
     token:string;
     mVerg,mVerm:tstrings;//验证码；
     mclientId,mbidnumber:string;//客户id
+    mPage:string;                //当前网页地址
     procedure strategy1();
     procedure Initstrategy1();
     procedure strategy1Test();//测试抢拍策略1
@@ -75,6 +76,7 @@ type
     procedure InitAddPriceStrategy();
     procedure AutoPriceStrategy();
     procedure PriceStrategy();
+    procedure setCookie(cookie:string);
   end;
 
 var
@@ -84,6 +86,32 @@ implementation
 uses
   uMain,uHookweb,uDown;
 {$R *.dfm}
+procedure TfWeb.setCookie(cookie:string);
+var
+  doc:IHTMLDocument2;
+  html_bid_user:ihtmlinputelement;
+  ss:tstrings;
+  i:integer;
+begin
+try
+  ss:=tstringlist.Create;
+  ss.Delimiter:=';';
+  ss.DelimitedText:=cookie;
+  doc:=fweb.wb1.Document as IHTMLDocument2;
+  for I := 0 to ss.Count-1 do
+  begin
+    doc.cookie:=ss[i];
+  end;
+
+  //wb1.Refresh;
+  html_bid_user:=(doc.all.item('bidnumber',0) as ihtmlinputelement);
+  html_bid_user.value:=fmain.edtBidnumber.Text;
+  html_bid_user:=(doc.all.item('bidpassword',0) as ihtmlinputelement);
+  html_bid_user.value:='1234';
+finally
+
+end;
+end;
 function TfWeb.getClientIdFromCookie(pageCookie:string):string;
 var
   i:integer;
@@ -265,15 +293,26 @@ begin
   //if(pos(mPage,mDowns.Text)<=0)then mDowns.Add(mPage);
   //downloadFilesThread();
   doc:=wb1.Document as IHTMLDocument2;
+  mPage:=doc.url;
+  fmain.memInfo.lines.Add(mPage);
+  fmain.memInfo.lines.Add('cookie:'+doc.cookie);
+  fmain.edtPage.Text:=mPage;
+  if(pos('bid.htm',mPage)>0)then
+  begin
   page_cookie:=doc.cookie;
-  fmain.memInfo.lines.Add('cookie:'+page_cookie);
+
   if(length(page_cookie)>0)then
   begin
+    fmain.edtCookie.Text:=page_cookie;
     getClientIdFromCookie(page_cookie);
     if(length(mClientId)>0) then
       fmain.edtClientId.Text:=mClientId;
     if(length(mBidnumber)>0) then
+    begin
       fmain.edtBidnumber.Text:=mBidnumber;
+      fmain.mHookSocketProcessor.DataPackage.ClientId:=mClientId;
+    end;
+  end;
   end;
 end;
 procedure TfWeb.wb1NewWindow2(ASender: TObject; var ppDisp: IDispatch;

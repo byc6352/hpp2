@@ -915,7 +915,7 @@ object fMain: TfMain
           Width = 680
           Height = 21
           TabOrder = 0
-          Text = 'http://154.221.19.215/pp/login.htm'
+          Text = 'http://127.0.0.1:8080/bid/login.htm'
         end
         object btnRedectUrl: TButton
           Left = 692
