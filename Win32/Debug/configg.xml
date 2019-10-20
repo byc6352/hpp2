@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <pp>
 	<app version="2.01">沪牌自动抢拍助手</app>
 	<pos>
@@ -11,9 +11,9 @@
 		<inputaddprice>1593,382,1698,410</inputaddprice>
 		<submitaddprice>1724,380,1796,408</submitaddprice>
 	</pos>
-	<token gettime="2019-05-19">24.b67d414f3f85a66d9cb3ef8564ac14f7.2592000.1560825578.282335-16197183</token>
+	<token gettime="2019-09-19">24.79dfca119766dcefddac9ad48d011b8b.2592000.1571473817.282335-16197183</token>
 	<strategy requestvercodetime="15" addprice="300">
-		<strategy1 name="策略1" requestvercodetime="7" submitpricetime="5" addprice="700">离拍卖结束前7秒提交一个加700的价格；</strategy1>
+		<strategy1 name="策略1" requestvercodetime="20" submitpricetime="3" addprice="1000">离拍卖结束前20秒提交一个加1000的价格；</strategy1>
 		<strategy2 name="策略2" requestvercodetime="12" submitpricetime="3" addprice="700">离拍卖结束前6秒提交一个加500的价格；</strategy2>
 		<strategy3 name="策略3" requestvercodetime="15" submitpricetime="5" addprice="1000">离拍卖结束前15秒提交一个加500的价格；</strategy3>
 	</strategy>

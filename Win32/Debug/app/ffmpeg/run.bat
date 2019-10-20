@@ -1,0 +1,1 @@
+ffmpeg -y -f gdigrab  -t 3600 -r 25 -i desktop -vcodec libx264 -s 1920x1080 123.mp4
