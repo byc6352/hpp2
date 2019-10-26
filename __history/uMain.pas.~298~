@@ -113,6 +113,8 @@ type
     btnRedectUrl: TButton;
     btnSetCookie: TButton;
     edtCookie: TLabeledEdit;
+    edtPage: TLabeledEdit;
+    lbYzCodeContent: TLabel;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -164,7 +166,8 @@ type
 
     procedure getParamsToCtl(configFile:string);
     procedure setParamsToWeb();
-    function baiduIdentify(bmp:Tbitmap):string;
+    function baiduIdentify(bmp:Tbitmap):string;overload;
+    function baiduIdentify(mem: TMemoryStream):string;overload;
     function getRectFromStr(s:string):tRect;
     procedure getPrice();
     procedure saveStrategy(configFile:string);
@@ -305,16 +308,28 @@ end;
 
 procedure TfMain.showYzcodePng(pData:pointer;dwSize:DWORD);
 var
-  stream:tmemoryStream;
+  stream,stream2:tmemoryStream;
+  myimg: TImage;
+  myjpg: TJPEGImage;
 begin
 try
   stream:=tMemoryStream.create;
+  stream2:=tMemoryStream.create;
   stream.Write(pData^,dwSize);
   stream.Position:=0;
-  imgYzCode.Picture.LoadFromStream(stream);
-  stream.Free;
-finally
+  myimg := TImage.Create(self);
+  myimg.Picture.LoadFromStream(stream);
+  myjpg := ConvertPICintoJPG(myimg.Picture,  myimg.Picture.Width, myimg.Picture.Height);
+  myjpg.SaveToStream(stream2);
+  stream2.Position:=0;
+  lbYzCodeContent.Caption:=baiduIdentify(stream2);
+  stream2.Position:=0;
+  imgYzCode.Picture.LoadFromStream(stream2);
 
+finally
+  stream.Free;
+  stream2.Free;
+  myimg.Free;
 end;
 end;
 procedure TfMain.socketMessage(var msg:TMessage);
@@ -1072,7 +1087,7 @@ end;
 
 procedure TfMain.FormShow(Sender: TObject);
 begin
-  btnSetSysTimeClick(sender);
+  //btnSetSysTimeClick(sender);
 
   fMain.Top:=0;
   fMain.Left:=0;
@@ -1090,8 +1105,8 @@ begin
   fweb.state.autoPP:=false;
   statusbar1.Panels[0].Text:='当前状态：未进入系统';
   //statusbar1.Panels[0].Text:=uFuncs.GetDateFormatSep;
-  //IdSNTP1.Host:='time.windows.com';
-  //IdSNTP1.SyncTime ;
+  IdSNTP1.Host:='time.windows.com';
+  IdSNTP1.SyncTime ;
 
   TWinControl(fweb.Wb2).Visible:=False;
 
@@ -1180,6 +1195,52 @@ begin
     statusbar1.Panels[2].Text:='当前最低成交价：'+price;
   end;
   //fmain.Caption:='沪拍牌助手v1.0 '+mPrice;
+end;
+function TfMain.baiduIdentify(mem: TMemoryStream):string;
+var
+  iddec:TIdEncoderMIME;
+  ss,url: string;
+  str1: tstringlist;
+  memstr: TStringStream;
+  h: integer;
+  jpg: tjpegimage;
+begin
+  idhttp1.ReadTimeout:= 65000;
+  idhttp1.ConnectTimeout := 65000;
+  memstr:= TStringStream.Create;
+  mem.Position:= 0;
+  iddec:=TIdEncoderMIME.Create;
+  ss:= iddec.Encode(mem);  //  *******
+  //mem.Free;
+  //提交
+  str1:= tstringlist.Create;
+  str1.Add('image='+ URLEncode(ss));
+      //str1.savetoFile('d:\c.txt');
+  //url:= 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=24.26acc87472fcf0fbf17bccacfda77abf.2592000.1560126599.282335-9533039';
+  url:= 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token='+fweb.token;
+  idhttp1.Request.ContentType:= 'application/x-www-form-urlencoded';
+  try
+    idhttp1.Post( url,str1,memstr);
+    memstr.Position:= 0;
+    ss:= memstr.Encoding.UTF8.GetString(memstr.Bytes);
+    meminfo.Lines.Add(ss);
+  finally
+    memstr.Free;
+    str1.Free;
+    iddec.Free;
+  end;
+  h:= pos('words":',ss);
+  if h >0 then
+      begin
+       while h>0 do
+        begin
+         delete(ss,1,h+6);
+         delete(ss,1,pos('"',ss));
+         result:=copy(ss,1,pos('"',ss)-1);
+         h:= pos('words":',ss);
+        end;
+      end else
+  result:=ss;
 end;
 function TfMain.baiduIdentify(bmp:Tbitmap):string;
 var

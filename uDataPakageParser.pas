@@ -151,7 +151,7 @@ var
 begin
   while bProcess do
   begin
-    Log('mProcess<mCount:'+inttostr(mProcess)+'    '+inttostr(mCount));
+    //Log('mProcess<mCount:'+inttostr(mProcess)+'    '+inttostr(mCount));
     if(mProcess<mCount)then
     begin
       Parsepackage(mProcess);

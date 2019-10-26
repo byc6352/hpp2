@@ -3,7 +3,7 @@ unit uFuncs;
 interface
 uses
    System.SysUtils,messages,windows, Vcl.Graphics,system.classes,strutils,uconfig,registry,urlmon,
-   ShlObj,jpeg;
+   ShlObj;
 
 function getDateFilename():string;
 function captureScreen(x1:integer;y1:integer;x2:integer;y2:integer):tbitmap;
@@ -30,31 +30,8 @@ function url2file(ServerName,ObjectName:string;ServerPort:DWORD;var url:string):
 function url2file(url:string):string;overload;
 function DownloadToFile(Source, Dest: string): Boolean;
 function GetSystemPath(FID: Integer): string;
-function ConvertPICintoJPG(cPic: TPicture; pWidth: Integer = 0; pHeight: Integer = 0): TJpegImage; stdcall;
 implementation
 
-function ConvertPICintoJPG(cPic: TPicture; pWidth: Integer = 0; pHeight: Integer = 0): TJpegImage; stdcall;
-var
-  tBMP: TBitmap;
-begin
-  Result := TJpegImage.Create;
-  if (pWidth > 0) or (pHeight > 0) then
-  begin
-    try
-
-      tBMP := TBitmap.Create; //创建一个过渡性BMP图片,用于更改图片尺寸
-      if pWidth <= 0 then pWidth := cPic.Width; //若pWidth为有效值则改变tBMP宽度,否则不变
-      if pHeight <= 0 then pHeight := cPic.Height; //若pHeight为有效值则改变tBMP高度,否则不变
-      tBMP.Width := pWidth;
-      tBMP.Height := pHeight;
-      tBMP.Canvas.StretchDraw(tBMP.Canvas.ClipRect, cPic.Graphic); //按照新尺寸重画图形
-      Result.Assign(tBMP);
-    finally
-      tBMP.Free;
-    end;
-  end
-  else Result.Assign(cPic);
-end;
 //uses ShlObj
 function GetSystemPath(FID: Integer): string;
 var

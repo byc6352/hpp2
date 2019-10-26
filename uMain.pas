@@ -114,6 +114,7 @@ type
     btnSetCookie: TButton;
     edtCookie: TLabeledEdit;
     edtPage: TLabeledEdit;
+    lbYzCodeContent: TLabel;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -165,7 +166,8 @@ type
 
     procedure getParamsToCtl(configFile:string);
     procedure setParamsToWeb();
-    function baiduIdentify(bmp:Tbitmap):string;
+    function baiduIdentify(bmp:Tbitmap):string;overload;
+    function baiduIdentify(mem: TMemoryStream):string;overload;
     function getRectFromStr(s:string):tRect;
     procedure getPrice();
     procedure saveStrategy(configFile:string);
@@ -194,7 +196,7 @@ implementation
 
 {$R *.dfm}
 uses
-  json,ShlObj,uFlash;
+  json,ShlObj,uFlash,uSpeecher;
 procedure TfMain.setMMcfg();
 var
   userdir,mmcfgFileName:String;
@@ -224,7 +226,7 @@ var
   DataFlag:TdataFlag;
   jsonObject,jsonObject2: TJSONObject;
   pOut:pOutData;
-  jsonData:ansiString;
+  jsonData,yzCodeMsg:ansiString;
 begin
 try
   DataFlag:=TdataFlag(msg.WParam);
@@ -269,6 +271,7 @@ try
       memInfo.Lines.Add(pOut^.jsonData);
       lbImageMsg.Caption:=mHookSocketProcessor.DataPackage.yzCodeMsg;
       edtpriceCode.Text:=mHookSocketProcessor.DataPackage.PriceCode;
+      speecher.say(mHookSocketProcessor.DataPackage.yzCodeMsg);
     end;
   fImageDownRequest:
     begin
@@ -303,7 +306,6 @@ begin
   if(rbtnUpDateOKandRequestPrice.Checked)then
     mHookSocketProcessor.DataPackage.ReplacePriceFlag:=TReplacePriceFlag.fReplaceDouble;
 end;
-
 procedure TfMain.showYzcodePng(pData:pointer;dwSize:DWORD);
 var
   stream:tmemoryStream;
@@ -312,12 +314,42 @@ try
   stream:=tMemoryStream.create;
   stream.Write(pData^,dwSize);
   stream.Position:=0;
+  lbYzCodeContent.Caption:=baiduIdentify(stream);
+  stream.Position:=0;
   imgYzCode.Picture.LoadFromStream(stream);
-  stream.Free;
-finally
 
+finally
+  stream.Free;
 end;
 end;
+{
+procedure TfMain.showYzcodePng(pData:pointer;dwSize:DWORD);
+var
+  stream,stream2:tmemoryStream;
+  myimg: TImage;
+  myjpg: TJPEGImage;
+begin
+try
+  stream:=tMemoryStream.create;
+  stream2:=tMemoryStream.create;
+  stream.Write(pData^,dwSize);
+  stream.Position:=0;
+  myimg := TImage.Create(self);
+  myimg.Picture.LoadFromStream(stream);
+  myjpg := ConvertPICintoJPG(myimg.Picture,  myimg.Picture.Width, myimg.Picture.Height);
+  myjpg.SaveToStream(stream2);
+  stream2.Position:=0;
+  lbYzCodeContent.Caption:=baiduIdentify(stream2);
+  stream2.Position:=0;
+  imgYzCode.Picture.LoadFromStream(stream2);
+
+finally
+  stream.Free;
+  stream2.Free;
+  myimg.Free;
+end;
+end;
+}
 procedure TfMain.socketMessage(var msg:TMessage);
 var
   myJson:TMyJson;
@@ -540,13 +572,16 @@ begin
   end;
 end;
 procedure TfMain.btnAutoPPClick(Sender: TObject);
+var
+  say:string;
 begin
-
+try
   if(btnAutoPP.Caption='自动抢拍')then
   begin
     if(fweb.state.enterSys=false)then
     begin
-      showmessage('必须先进入抢拍系统，才能开始抢拍！');
+      say:='必须先进入抢拍系统，才能开始抢拍！';
+      showmessage(say);
       exit;
     end;
     btnAutoPP.Caption:='停止抢拍';
@@ -556,10 +591,12 @@ begin
     saveStrategy(fweb.configFile);//保存策略参数
     if(fweb.state.VirtualSys)then
       begin
-        statusbar1.Panels[0].Text:='当前状态：模拟抢拍系统，已打开自动抢拍';
+        say:='当前状态：模拟抢拍系统，已打开自动抢拍';
+        statusbar1.Panels[0].Text:=say;
         exit;
       end else begin
-        statusbar1.Panels[0].Text:='当前状态：国拍抢拍系统，已打开自动抢拍';
+         say:='当前状态：国拍抢拍系统，已打开自动抢拍';
+        statusbar1.Panels[0].Text:=say;
       end;
   end else begin
     btnAutoPP.Caption:='自动抢拍';
@@ -567,12 +604,19 @@ begin
     chkPrice.Checked:=false;
     if(fweb.state.VirtualSys)then
     begin
-      statusbar1.Panels[0].Text:='当前状态：模拟抢拍系统，已停止自动抢拍';
+      say:='当前状态：模拟抢拍系统，已停止自动抢拍';
+      statusbar1.Panels[0].Text:=say;
       exit;
     end else begin
-      statusbar1.Panels[0].Text:='当前状态：国拍抢拍系统，已停止自动抢拍';
+       say:='当前状态：国拍抢拍系统，已停止自动抢拍';
+      statusbar1.Panels[0].Text:=say;
     end;
   end;
+finally
+  if(say<>'')then
+    speecher.say(say);
+end;
+
 end;
 
 procedure TfMain.btnDownVerCodeClick(Sender: TObject);
@@ -607,6 +651,7 @@ end;
 procedure TfMain.btnGPClick(Sender: TObject);
 var
   rctWeb:tRect;
+  say:string;
 begin
   if(not uAuth.authorize())then exit;
   fweb.configFile:=uConfig.configFile2;
@@ -620,15 +665,17 @@ begin
   //fWeb.wb1.Navigate('https://paimai2.alltobid.com/bid/921b37e877a843279394ee48585fdc48/login.htm');
   //https://paimai2.alltobid.com/bid/b901b3c0ba414c3bb7c08761aedbff50/login.htm
   //webhook.HookWebAPI;
+  say:='当前状态：国拍抢拍系统，未打开自动抢拍';
   fWeb.wb1.Navigate(fweb.GPaddr);
   //状态显示：
   fweb.state.enterSys:=true;
   fweb.state.VirtualSys:=false;
   fweb.state.autoPP:=false;
-  statusbar1.Panels[0].Text:='当前状态：国拍抢拍系统，未打开自动抢拍';
+  statusbar1.Panels[0].Text:=say;
   btnVirtual.Enabled:=false;
   //rctWeb:=rect(900,20,1860,780);
   //MoveWindow(fWeb.Handle,rctWeb.left,rctWeb.Top,rctWeb.Width,rctweb.Height,true);
+  speecher.say(say);
 end;
 
 procedure TfMain.btnPriceSaveClick(Sender: TObject);
@@ -911,7 +958,7 @@ procedure TfMain.btnUpdateFinishTimeClick(Sender: TObject);
 begin
   fweb.mFinishTime:=strtodatetime(trim(edtFinishTime.Text)); //
   //fweb.mFinishTime:=VarToDateTime(trim(edtFinishTime.Text));
-
+  speecher.say('结束时间是：'+trim(edtFinishTime.Text));
   showmessage('更新成功！');
 end;
 
@@ -1103,6 +1150,10 @@ begin
   page1.ActivePageIndex:=0;
   mHookSocketProcessor := THookSocketProcessor.getInstance(fmain.Handle);
   setMMcfg();
+  uSpeecher.Speecher:=TSpeecher.Create(fmain.Handle);
+  uSpeecher.Speecher.Token:=fweb.token;
+  uSpeecher.Speecher.PlayVolum:=1;
+
 end;
 
 procedure TfMain.Timer1Timer(Sender: TObject);
@@ -1181,6 +1232,54 @@ begin
     statusbar1.Panels[2].Text:='当前最低成交价：'+price;
   end;
   //fmain.Caption:='沪拍牌助手v1.0 '+mPrice;
+end;
+function TfMain.baiduIdentify(mem: TMemoryStream):string;
+var
+  iddec:TIdEncoderMIME;
+  ss,url: string;
+  str1: tstringlist;
+  memstr: TStringStream;
+  h: integer;
+  jpg: tjpegimage;
+begin
+  idhttp1.ReadTimeout:= 65000;
+  idhttp1.ConnectTimeout := 65000;
+  memstr:= TStringStream.Create;
+  mem.Position:= 0;
+  iddec:=TIdEncoderMIME.Create;
+  ss:= iddec.Encode(mem);  //  *******
+  //mem.Free;
+  //提交
+  str1:= tstringlist.Create;
+  str1.Add('image='+ URLEncode(ss));
+      //str1.savetoFile('d:\c.txt');
+  //url:= 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=24.26acc87472fcf0fbf17bccacfda77abf.2592000.1560126599.282335-9533039';
+  //url:= 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token='+fweb.token;
+  //url:= 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate?access_token='+fweb.token;
+  url:= 'https://aip.baidubce.com/rest/2.0/ocr/v1/webimage?access_token='+fweb.token;
+  idhttp1.Request.ContentType:= 'application/x-www-form-urlencoded';
+  try
+    idhttp1.Post( url,str1,memstr);
+    memstr.Position:= 0;
+    ss:= memstr.Encoding.UTF8.GetString(memstr.Bytes);
+    meminfo.Lines.Add(ss);
+  finally
+    memstr.Free;
+    str1.Free;
+    iddec.Free;
+  end;
+  h:= pos('words":',ss);
+  if h >0 then
+      begin
+       while h>0 do
+        begin
+         delete(ss,1,h+6);
+         delete(ss,1,pos('"',ss));
+         result:=copy(ss,1,pos('"',ss)-1);
+         h:= pos('words":',ss);
+        end;
+      end else
+  result:=ss;
 end;
 function TfMain.baiduIdentify(bmp:Tbitmap):string;
 var

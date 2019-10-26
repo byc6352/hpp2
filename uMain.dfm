@@ -679,6 +679,13 @@ object fMain: TfMain
           FF8DF63612215024415024415024415024415024415024415024415024415024
           41502441502441502441F8064A662F5C6E41E6E00000000049454E44AE426082}
       end
+      object lbYzCodeContent: TLabel
+        Left = 270
+        Top = 462
+        Width = 31
+        Height = 13
+        Caption = 'result:'
+      end
       object GroupBox7: TGroupBox
         Left = 0
         Top = 560
@@ -687,7 +694,6 @@ object fMain: TfMain
         Align = alBottom
         Caption = #20215#26684#20462#25913
         TabOrder = 0
-        ExplicitTop = 559
         object rbtnUpdateNo: TRadioButton
           Left = 14
           Top = 24
@@ -874,8 +880,9 @@ object fMain: TfMain
           Top = 18
           Width = 560
           Height = 21
-          EditLabel.Width = 3
+          EditLabel.Width = 75
           EditLabel.Height = 13
+          EditLabel.Caption = 'edtRemotePath'
           TabOrder = 0
           Text = 'http://test.alltobid.com/moni/ver/'
         end
@@ -908,7 +915,6 @@ object fMain: TfMain
         Align = alTop
         Caption = #36339#36716#21040#22914#19979#22320#22336#65306
         TabOrder = 3
-        ExplicitTop = 99
         object edtNewUrl: TEdit
           Left = 3
           Top = 18
@@ -944,6 +950,15 @@ object fMain: TfMain
           EditLabel.Height = 13
           EditLabel.Caption = 'Cookie:'
           TabOrder = 3
+          Text = 
+            'Hm_lvt_c581927e72fdea61ea0326e11a987a39=1568982036,1568983055,15' +
+            '69025971,1569026144; testcookie=1; gpcaptchaid=43023321-df44-424' +
+            'b-a835-155cb08910f6; bidnumber=55409110; username=%E9%BB%84%E5%A' +
+            'E%97%E6%98%8E; clientId55409110=378da9fea46c4bf2a8593d61c25f21e8' +
+            '; bidcount=2; vdate=2019%E5%B9%B49%E6%9C%8830%E6%97%A5; pwd=3224' +
+            '17f32fa34938b57ab99f7348030f; tradeserver=180.153.15.118%3A8300%' +
+            '2C180.153.38.219%3A8300%2C180.153.29.213%3A8300%2C180.153.24.227' +
+            '%3A8300; webserver=paimai2.alltobid.com%3A80'
         end
         object edtPage: TLabeledEdit
           Left = 5
