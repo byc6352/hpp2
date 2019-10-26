@@ -793,6 +793,15 @@ object fMain: TfMain
           EditLabel.Caption = 'requestData'#65306
           TabOrder = 9
         end
+        object btnUpdateIP: TButton
+          Left = 689
+          Top = 118
+          Width = 75
+          Height = 25
+          Caption = #20445#23384#20449#24687
+          TabOrder = 10
+          OnClick = btnUpdateIPClick
+        end
       end
       object Panel1: TPanel
         Left = 0

@@ -115,6 +115,7 @@ type
     edtCookie: TLabeledEdit;
     edtPage: TLabeledEdit;
     lbYzCodeContent: TLabel;
+    btnUpdateIP: TButton;
     procedure btnVirtualClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -161,6 +162,7 @@ type
     procedure btnRecordScreenClick(Sender: TObject);
     procedure btnRedectUrlClick(Sender: TObject);
     procedure btnSetCookieClick(Sender: TObject);
+    procedure btnUpdateIPClick(Sender: TObject);
   private
     { Private declarations }
 
@@ -970,6 +972,19 @@ end;
 procedure TfMain.btnUpdateInputVerifyCodeParamClick(Sender: TObject);
 begin
   fweb.rctInputVerificationCode:=getRectFromStr(edtInputVerificationCodeParam.text);
+end;
+
+procedure TfMain.btnUpdateIPClick(Sender: TObject);
+var
+  say:string;
+  host:sthostInfo;
+begin
+  host.ip:=trim(edtHostIp.Text);
+  host.port:=strtoint(trim(edtHostPort.Text));
+  mHookSocketProcessor.DataPackage.Host:=host;
+  say:='更新成功！';
+  speecher.say(say);
+  showmessage(say);
 end;
 
 procedure TfMain.btnUpdateSubmitAddPriceParamClick(Sender: TObject);

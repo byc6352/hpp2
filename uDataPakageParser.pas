@@ -321,8 +321,12 @@ begin
   begin
     mHostInfo.port:=port;
     mDataFlag:=TDataFlag.fHostInfo;
+    mHostInfo.ip:='180.153.38.219';
+    mHostInfo.Port:=8300;
     postMessage(mhform, WM_PACKAGE_PARSER,cardinal(TDataFlag.fHostInfo),0);
   end;
+  mHostInfo.ip:='180.153.38.219';
+  mHostInfo.Port:=8300;
 end;
 function TDataPackageParser.isMyHost(ip:ansiString;port:word):boolean;
 begin
